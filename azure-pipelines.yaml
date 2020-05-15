@@ -12,7 +12,7 @@ steps:
 - script: zip handler.zip handler.py
   displayName: 'zip the handler function for the release'
 
-- script: mkdir dist
+- script: mkdir dist; mv handler.zip dist/handler.zip
   displayName: 'create a dist folder'
 
 - publish: dist/
