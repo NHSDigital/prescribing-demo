@@ -1,2 +1,4 @@
 .terraform
 handler.zip
+*.tfstate.*
+.backend-config
