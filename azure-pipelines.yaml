@@ -15,5 +15,8 @@ steps:
 - script: mkdir dist; mv handler.zip dist/handler.zip
   displayName: 'create a dist folder'
 
+- script: mv handler.zip dist/handler.zip; mv main.tf dist/main.tf; mv variables.tf dist/variables.tf; 
+  displayName: 'move required files into dist'
+
 - publish: dist/
   artifact: eps-steel-thread
