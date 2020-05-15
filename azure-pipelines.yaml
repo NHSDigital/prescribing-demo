@@ -1,0 +1,14 @@
+gger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+pr:
+  branches:
+    include: ['*']
+
+steps:
+- script: zip handler.py handler.zip
+  displayName: 'zip the handler function for the release'
+
