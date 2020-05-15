@@ -11,3 +11,6 @@ pr:
 steps:
 - script: zip handler.zip handler.py
   displayName: 'zip the handler function for the release'
+
+- publish: dist/
+  artifact: eps-steel-thread
