@@ -15,8 +15,14 @@ steps:
 - script: mkdir dist; mv handler.zip dist/handler.zip
   displayName: 'create a dist folder'
 
-- script: mv handler.zip dist/handler.zip; mv main.tf dist/main.tf; mv variables.tf dist/variables.tf; 
-  displayName: 'move required files into dist'
+- script: mv handler.zip dist/handler.zip
+  displayName: 'move handler files into dist'
+
+- script: mv main.tf dist/main.tf
+  displayName: 'move main terraform file into dist'
+
+- script: mv variables.tf dist/variables.tf; 
+  displayName: 'move required variable file into dist'
 
 - publish: dist/
   artifact: eps-steel-thread
