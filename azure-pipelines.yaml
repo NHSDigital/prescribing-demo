@@ -12,11 +12,17 @@ steps:
 - script: zip handler.zip handler.py
   displayName: 'zip the handler function for the release'
 
-- script: mkdir dist; mv handler.zip dist/handler.zip
+- script: mkdir dist
   displayName: 'create a dist folder'
+
+- script: mkdir dist/client
+  displayName: 'create a client folder'
 
 - script: mv handler.zip dist/handler.zip
   displayName: 'move handler files into dist'
+  
+- script: mv client/** dist/client
+  displayName: 'move client files into dist'
 
 - script: mv main.tf dist/main.tf
   displayName: 'move main terraform file into dist'

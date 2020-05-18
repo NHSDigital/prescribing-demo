@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EPS Steel Thread Test Client</title>
+    <link rel="stylesheet" href="https://unpkg.com/98.css">
+    <link rel="stylesheet" href="client.css">
+    <script type="application/javascript" src="client.js"></script>
+</head>
+<body onload="reset()">
+    <div class="window" id="request">
+        <div class="title-bar">
+            <div class="title-bar-text">EPS Steel Thread - Request</div>
+        </div>
+        <div class="window-body">
+            <p>Make a request to the EPS Steel Thread API.</p>
+            <div class="field-row-stacked">
+                <label for="request-url">Request URL</label>
+                <input id="request-url" type="text"/>
+            </div>
+            <div class="field-row-stacked">
+                <label for="request-method">Request method</label>
+                <select onchange="requestMethodChanged()" id="request-method"></select>
+            </div>
+            <div class="field-row-stacked" id="request-body-field-row">
+                <label for="request-body">Request body</label>
+                <textarea id="request-body" rows="8"></textarea>
+            </div>
+            <div class="field-row buttons">
+                <button onclick="sendRequest()">Make Request</button>
+                <button onclick="reset()">Reset</button>
+            </div>
+        </div>
+    </div>
+    <p></p>
+    <div class="window" id="response">
+        <div class="title-bar">
+            <div class="title-bar-text">EPS Steel Thread - Response</div>
+        </div>
+        <div class="window-body">
+            <p>Response from the EPS Steel Thread API.</p>
+            <div class="field-row-stacked" id="response-status-field-row">
+                <label for="response-status">Response status code</label>
+                <input disabled id="response-status" type="text"/>
+            </div>
+            <div class="field-row-stacked" id="response-body-field-row">
+                <label for="response-body">Response body</label>
+                <textarea disabled id="response-body" rows="8"></textarea>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
