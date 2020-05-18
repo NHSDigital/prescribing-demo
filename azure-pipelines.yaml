@@ -21,7 +21,7 @@ steps:
 - script: mv main.tf dist/main.tf
   displayName: 'move main terraform file into dist'
 
-- script: mv variables.tf dist/variables.tf; 
+- script: mv variables.tf dist/variables.tf
   displayName: 'move required variable file into dist'
 
 - publish: dist/
