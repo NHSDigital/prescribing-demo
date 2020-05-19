@@ -8,6 +8,8 @@ function sendRequest() {
     xhr.onload = handleResponse
     const requestMethod = getRequestMethod();
     xhr.open(requestMethod, getRequestUrl());
+    xhr.setRequestHeader("NHSD-Session-URID", "a3599e46-2590-4519-8e76-9e55d8d47fec")
+    xhr.setRequestHeader("Authorization", "Bearer " + document.getElementById("bearer-token").value)
     if (shouldIncludeRequestBody(requestMethod)) {
         xhr.send(getRequestBody());
     } else {
@@ -22,7 +24,7 @@ function handleResponse() {
 }
 
 function reset() {
-    setRequestUrl("https://internal-dev.api.service.nhs.uk/eps-steel-thread")
+    setRequestUrl("https://internal-dev.api.service.nhs.uk/eps-steel-thread/test")
     populateRequestMethodList()
     requestMethodChanged()
     setResponseBody("")
