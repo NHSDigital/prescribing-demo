@@ -3,3 +3,4 @@ handler.zip
 *.tfstate.*
 .backend-config
 .backend.config
+.envrc
