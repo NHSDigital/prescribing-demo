@@ -25,9 +25,11 @@ steps:
 
 - script: ~/.local/bin/pipenv --python 3.8 && ~/.local/bin/pipenv install --dev
   displayName: Install dependencies
+  workingDirectory: ./lambda
 
 - script: ~/.local/bin/pipenv run pytest -v
   displayName: Run tests in python package
+  workingDirectory: ./lambda
 
 - bash: sh ./scripts/bundle_python.sh
   displayName: Create python deployment package
