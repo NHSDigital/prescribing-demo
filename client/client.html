@@ -4,9 +4,12 @@
     <meta charset="UTF-8">
     <title>EPS Steel Thread Test Client</title>
     <link href="https://nhsuk.github.io/nhsuk-frontend/assets/nhsuk.css" rel="stylesheet">
-    <script type="application/javascript" src="rivets.bundled.min.js"></script>
-    <script type="application/javascript" src="example-prescriptions.js"></script>
-    <script type="application/javascript" src="client.js"></script>
+    <script type="application/javascript" src="assets/rivets.bundled.min.js"></script>
+    <script type="application/javascript" src="assets/example-prescriptions.js"></script>
+    <script type="application/javascript" src="assets/client.js"></script>
+    {% if bearer_token is not none %}
+    <script type="application/javascript">pageData.bearerToken="{{bearer_token}}"</script>
+    {% endif %}
 </head>
 <body onload="onLoad()">
 <header class="nhsuk-header nhsuk-header--transactional" role="banner">
@@ -43,9 +46,22 @@
                     <input class="nhsuk-input" id="session-urid" type="text" rv-value="sessionUrid">
                 </div>
                 <div class="nhsuk-form-group">
-                    <label class="nhsuk-label" for="bearer-token">Bearer token</label>
-                    <span class="nhsuk-hint" id="bearer-token-hint">This is the access token returned upon authentication with Apigee.</span>
+                    <label class="nhsuk-label" for="bearer-token">Access token</label>
+                    <span class="nhsuk-hint" id="bearer-token-hint">This is returned upon authentication with the identity server.</span>
                     <input class="nhsuk-input" id="bearer-token" type="text" aria-describedby="bearer-token-hint" rv-value="bearerToken">
+                </div>
+            </div>
+        </div>
+        <div class="nhsuk-grid-row" rv-hide="bearerToken">
+            <div class="nhsuk-grid-column-two-thirds">
+                <div class="nhsuk-action-link">
+                    <a class="nhsuk-action-link__link" href="{{signin_url}}">
+                        <svg class="nhsuk-icon nhsuk-icon__arrow-right-circle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M0 0h24v24H0z" fill="none"></path>
+                            <path d="M12 2a10 10 0 0 0-9.95 9h11.64L9.74 7.05a1 1 0 0 1 1.41-1.41l5.66 5.65a1 1 0 0 1 0 1.42l-5.66 5.65a1 1 0 0 1-1.41 0 1 1 0 0 1 0-1.41L13.69 13H2.05A10 10 0 1 0 12 2z"></path>
+                        </svg>
+                        <span class="nhsuk-action-link__text">Request access token</span>
+                    </a>
                 </div>
             </div>
         </div>

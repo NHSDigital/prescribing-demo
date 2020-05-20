@@ -1,0 +1,12 @@
+{
+    "name": "EPS Test Client with Auth",
+    "description": "An EPS Test client in Heroku.",
+    "image": "heroku/python",
+    "repository": "",
+    "keywords": ["python"],
+    "env": {
+    },
+    "environments": {
+    }
+  }
+  

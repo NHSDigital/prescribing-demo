@@ -7,3 +7,7 @@ handler.zip
 package
 .vscode
 .envrc
+.vscode
+.venv
+.env
+__pycache__
