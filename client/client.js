@@ -86,9 +86,7 @@ function sendRequest() {
     xhr.ontimeout = handleTimeout
     xhr.open("POST", "https://internal-dev.api.service.nhs.uk/eps-steel-thread/test/sign")
     xhr.setRequestHeader("Content-Type", "application/json")
-    if (pageData.bearerToken && pageData.bearerToken !== "") {
-        xhr.setRequestHeader("Authorization", "Bearer " + pageData.bearerToken)
-    }
+    xhr.setRequestHeader("Authorization", "Bearer " + document.querySelector('#bearer-token').value)
     if (pageData.sessionUrid && pageData.sessionUrid !== "") {
         xhr.setRequestHeader("NHSD-Session-URID", pageData.sessionUrid)
     }
