@@ -41,7 +41,7 @@ def do_callback(request: Request, code: str, state: str):
     response = httpx.post(OAUTH_SERVER_BASE_PATH + "token", data=formdata)
     response_json = response.json()
     return templates.TemplateResponse(
-        "callback.html",
+        "client.html",
         {
             "request": request,
             "bearer_token": response_json["access_token"],
