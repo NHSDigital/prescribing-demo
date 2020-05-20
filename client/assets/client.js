@@ -112,7 +112,7 @@ function handleTimeout() {
 }
 
 window.onerror = function(msg, url, line, col, error) {
-    addError("Unhandled error: " + msg + " at " + url + " " + line + ":" + col);
+    addError("Unhandled error: " + msg + " at " + url + ":" + line + " col " + col);
     return true;
 }
 
