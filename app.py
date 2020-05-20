@@ -31,7 +31,12 @@ def read_root(request: Request):
     }
     signin_url = OAUTH_SERVER_BASE_PATH + "authorize?" + urlencode(query_params)
     return templates.TemplateResponse(
-        "login.html", {"request": request, "signin_url": signin_url}
+        "client.html",
+        {
+            "request": request,
+            "signin_url": signin_url,
+            "bearer_token": None,
+        }
     )
 
 
