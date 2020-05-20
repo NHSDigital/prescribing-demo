@@ -3,4 +3,7 @@ handler.zip
 *.tfstate.*
 .backend-config
 .backend.config
+.idea
+package
+.vscode
 .envrc

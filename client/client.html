@@ -3,55 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <title>EPS Steel Thread Test Client</title>
-    <link rel="stylesheet" href="https://unpkg.com/98.css">
-    <link rel="stylesheet" href="client.css">
+    <link href="https://nhsuk.github.io/nhsuk-frontend/assets/nhsuk.css" rel="stylesheet">
+    <script type="application/javascript" src="rivets.bundled.min.js"></script>
+    <script type="application/javascript" src="example-prescriptions.js"></script>
     <script type="application/javascript" src="client.js"></script>
 </head>
-<body onload="reset()">
-    <div class="bearer-token">
-        <label for="bearer-token">Bearer token</label>
-        <input type="text" id="bearer-token" name="bearer-token"/>
-    </div>
-    <div class="window" id="request">
-        <div class="title-bar">
-            <div class="title-bar-text">EPS Steel Thread - Request</div>
+<body onload="onLoad()">
+<header class="nhsuk-header nhsuk-header--transactional" role="banner">
+    <div class="nhsuk-width-container nhsuk-header__container">
+        <div class="nhsuk-header__logo nhsuk-header__logo--only">
+            <a class="nhsuk-header__link" href="#" aria-label="NHS homepage">
+                <svg class="nhsuk-logo" xmlns="http://www.w3.org/2000/svg" role="presentation" focusable="false" viewBox="0 0 40 16">
+                    <path class="nhsuk-logo__background" d="M0 0h40v16H0z"></path>
+                    <path class="nhsuk-logo__text" d="M3.9 1.5h4.4l2.6 9h.1l1.8-9h3.3l-2.8 13H9l-2.7-9h-.1l-1.8 9H1.1M17.3 1.5h3.6l-1 4.9h4L25 1.5h3.5l-2.7 13h-3.5l1.1-5.6h-4.1l-1.2 5.6h-3.4M37.7 4.4c-.7-.3-1.6-.6-2.9-.6-1.4 0-2.5.2-2.5 1.3 0 1.8 5.1 1.2 5.1 5.1 0 3.6-3.3 4.5-6.4 4.5-1.3 0-2.9-.3-4-.7l.8-2.7c.7.4 2.1.7 3.2.7s2.8-.2 2.8-1.5c0-2.1-5.1-1.3-5.1-5 0-3.4 2.9-4.4 5.8-4.4 1.6 0 3.1.2 4 .6"></path>
+                    <image src="https://assets.nhs.uk/images/nhs-logo.png" xlink:href=""></image>
+                </svg>
+            </a>
         </div>
-        <div class="window-body">
-            <p>Make a request to the EPS Steel Thread API.</p>
-            <div class="field-row-stacked">
-                <label for="request-url">Request URL</label>
-                <input id="request-url" type="text"/>
-            </div>
-            <div class="field-row-stacked">
-                <label for="request-method">Request method</label>
-                <select onchange="requestMethodChanged()" id="request-method"></select>
-            </div>
-            <div class="field-row-stacked" id="request-body-field-row">
-                <label for="request-body">Request body</label>
-                <textarea id="request-body" rows="8"></textarea>
-            </div>
-            <div class="field-row buttons">
-                <button onclick="sendRequest()">Make Request</button>
-                <button onclick="reset()">Reset</button>
-            </div>
+        <div class="nhsuk-header__transactional-service-name">
+            <a class="nhsuk-header__transactional-service-name--link" href="#">EPS Steel Thread</a>
         </div>
     </div>
-    <p></p>
-    <div class="window" id="response">
-        <div class="title-bar">
-            <div class="title-bar-text">EPS Steel Thread - Response</div>
-        </div>
-        <div class="window-body">
-            <p>Response from the EPS Steel Thread API.</p>
-            <div class="field-row-stacked" id="response-status-field-row">
-                <label for="response-status">Response status code</label>
-                <input disabled id="response-status" type="text"/>
-            </div>
-            <div class="field-row-stacked" id="response-body-field-row">
-                <label for="response-body">Response body</label>
-                <textarea disabled id="response-body" rows="8"></textarea>
+</header>
+<div class="nhsuk-width-container">
+    <main class="nhsuk-main-wrapper" id="main-content">
+        <div class="nhsuk-grid-row">
+            <div class="nhsuk-grid-column-two-thirds">
+                <fieldset class="nhsuk-fieldset">
+                    <legend class="nhsuk-fieldset__legend nhsuk-fieldset__legend--xl">
+                        <h1 class="nhsuk-fieldset__heading">Review and sign</h1>
+                    </legend>
+                </fieldset>
             </div>
         </div>
-    </div>
+        <div class="nhsuk-grid-row">
+            <div class="nhsuk-grid-column-two-thirds">
+                <div class="nhsuk-form-group">
+                    <label class="nhsuk-label" for="session-urid">Session URID</label>
+                    <input class="nhsuk-input" id="session-urid" type="text" rv-value="sessionUrid">
+                </div>
+                <div class="nhsuk-form-group">
+                    <label class="nhsuk-label" for="bearer-token">Bearer token</label>
+                    <span class="nhsuk-hint" id="bearer-token-hint">This is the access token returned upon authentication with Apigee.</span>
+                    <input class="nhsuk-input" id="bearer-token" type="text" aria-describedby="bearer-token-hint" rv-value="bearerToken">
+                </div>
+            </div>
+        </div>
+        <div class="nhsuk-grid-row">
+            <div class="nhsuk-grid-column-two-thirds">
+                <div class="nhsuk-form-group">
+                    <fieldset class="nhsuk-fieldset" aria-describedby="example-hint">
+                        <legend class="nhsuk-fieldset__legend nhsuk-fieldset__legend--m">Select a prescription to sign</legend>
+                        <span class="nhsuk-hint" id="example-hint">Select from a list of predefined example prescriptions.</span>
+                        <ol class="nhsuk-contents-list__list">
+                            <li class="nhsuk-contents-list__item" rv-each-example="examples">
+                                <a class="nhsuk-contents-list__link" rv-on-click="example.select">{example.description}</a>
+                            </li>
+                        </ol>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+        <div class="nhsuk-grid-row">
+            <div class="nhsuk-grid-column-two-thirds">
+                <div class="nhsuk-panel-with-label">
+                    <h3 class="nhsuk-panel-with-label__label">Patient</h3>
+                    <dl class="nhsuk-summary-list">
+                        <div class="nhsuk-summary-list__row" rv-each-name="signRequestSummary.patient.name">
+                            <dt class="nhsuk-summary-list__key">Name</dt>
+                            <dd class="nhsuk-summary-list__value">{name | fullName}</dd>
+                        </div>
+                        <div class="nhsuk-summary-list__row">
+                            <dt class="nhsuk-summary-list__key">NHS number</dt>
+                            <dd class="nhsuk-summary-list__value">{signRequestSummary.patient.identifier | nhsNumber}</dd>
+                        </div>
+                        <div class="nhsuk-summary-list__row">
+                            <dt class="nhsuk-summary-list__key">Date of birth</dt>
+                            <dd class="nhsuk-summary-list__value">{signRequestSummary.patient.birthDate}</dd>
+                        </div>
+                        <div class="nhsuk-summary-list__row">
+                            <dt class="nhsuk-summary-list__key">Gender</dt>
+                            <dd class="nhsuk-summary-list__value">{signRequestSummary.patient.gender | titleCase}</dd>
+                        </div>
+                        <div class="nhsuk-summary-list__row" rv-each-address="signRequestSummary.patient.address">
+                            <dt class="nhsuk-summary-list__key">Address</dt>
+                            <dd class="nhsuk-summary-list__value">{address | fullAddress}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="nhsuk-grid-row">
+            <div class="nhsuk-grid-column-two-thirds">
+                <div class="nhsuk-table__panel-with-heading-tab">
+                    <h3 class="nhsuk-table__heading-tab">Medication</h3>
+                    <div class="nhsuk-table-responsive">
+                        <table class="nhsuk-table">
+                            <caption class="nhsuk-table__caption">Medication summary</caption>
+                            <thead class="nhsuk-table__head">
+                            <tr class="nhsuk-table__row">
+                                <th class="nhsuk-table__header" scope="col">Code</th>
+                                <th class="nhsuk-table__header" scope="col">Name</th>
+                                <th class="nhsuk-table__header" scope="col">Quantity</th>
+                                <th class="nhsuk-table__header" scope="col">Unit</th>
+                            </tr>
+                            </thead>
+                            <tbody class="nhsuk-table__body">
+                            <tr class="nhsuk-table__row" rv-each-medication="signRequestSummary.medicationRequests">
+                                <td class="nhsuk-table__cell">{medication.medicationCodeableConcept.coding | snomedCode}</td>
+                                <td class="nhsuk-table__cell ">{medication.medicationCodeableConcept.coding | snomedCodeDescription}</td>
+                                <td class="nhsuk-table__cell ">{medication.dispenseRequest.quantity.value}</td>
+                                <td class="nhsuk-table__cell ">{medication.dispenseRequest.quantity.unit}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="nhsuk-grid-row">
+            <div class="nhsuk-grid-column-two-thirds">
+                <div class="nhsuk-panel-with-label">
+                    <h3 class="nhsuk-panel-with-label__label">Prescriber</h3>
+                    <dl class="nhsuk-summary-list">
+                        <div class="nhsuk-summary-list__row" rv-each-name="signRequestSummary.practitioner.name">
+                            <dt class="nhsuk-summary-list__key">Name</dt>
+                            <dd class="nhsuk-summary-list__value">{name | fullName}</dd>
+                        </div>
+                        <div class="nhsuk-summary-list__row">
+                            <dt class="nhsuk-summary-list__key">Organization</dt>
+                            <dd class="nhsuk-summary-list__value">{signRequestSummary.prescribingOrganization.name} ({signRequestSummary.prescribingOrganization.identifier | odsCode})</dd>
+                        </div>
+                        <div class="nhsuk-summary-list__row" rv-each-address="signRequestSummary.prescribingOrganization.address">
+                            <dt class="nhsuk-summary-list__key">Address</dt>
+                            <dd class="nhsuk-summary-list__value">{address | fullAddress}</dd>
+                        </div>
+                        <div class="nhsuk-summary-list__row">
+                            <dt class="nhsuk-summary-list__key">Trust / CCG</dt>
+                            <dd class="nhsuk-summary-list__value">{signRequestSummary.parentOrganization.name} ({signRequestSummary.parentOrganization.identifier | odsCode})</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="nhsuk-grid-row">
+            <div class="nhsuk-grid-column-two-thirds">
+                <button class="nhsuk-button" type="submit" onclick="sendRequest()">Sign prescription</button>
+                <button class="nhsuk-button nhsuk-button--secondary" type="submit" onclick="resetPageData()">Reset</button>
+            </div>
+        </div>
+        <div class="nhsuk-grid-row" rv-show="errorList">
+            <div class="nhsuk-grid-column-two-thirds">
+                <div class="nhsuk-error-summary" aria-labelledby="error-summary-title" role="alert" tabindex="-1">
+                    <h2 class="nhsuk-error-summary__title" id="error-summary-title">
+                        There is a problem
+                    </h2>
+                    <div class="nhsuk-error-summary__body">
+                        <p>An error occurred while sending the request. See console for details.</p>
+<!--                        <ul class="nhsuk-list nhsuk-error-summary__list">-->
+<!--                            <li rv-each-error="errorList"><a href="#">{error.message}</a></li>-->
+<!--                        </ul>-->
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="nhsuk-grid-row" rv-show="signResponse">
+            <div class="nhsuk-grid-column-two-thirds">
+                <div class="nhsuk-panel-with-label">
+                    <h3 class="nhsuk-panel-with-label__label">API Response</h3>
+                    <dl class="nhsuk-summary-list">
+                        <div class="nhsuk-summary-list__row">
+                            <dt class="nhsuk-summary-list__key">Status code</dt>
+                            <dd class="nhsuk-summary-list__value">{signResponse.statusCode}</dd>
+                        </div>
+                        <div class="nhsuk-summary-list__row">
+                            <dt class="nhsuk-summary-list__key">Status text</dt>
+                            <dd class="nhsuk-summary-list__value">{signResponse.statusText}</dd>
+                        </div>
+                        <div class="nhsuk-summary-list__row">
+                            <dt class="nhsuk-summary-list__key">Body</dt>
+                            <dd class="nhsuk-summary-list__value">{signResponse.body}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
 </body>
 </html>
