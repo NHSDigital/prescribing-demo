@@ -31,7 +31,7 @@ steps:
   displayName: Run tests in python package
   workingDirectory: ./lambda
 
-- bash: sh ./scripts/bundle_python.sh
+- bash: sh ../scripts/bundle_python.sh
   displayName: Create python deployment package
   workingDirectory: ./lambda
 
