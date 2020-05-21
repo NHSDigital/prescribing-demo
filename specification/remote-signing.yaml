@@ -1,0 +1,102 @@
+# This is an OpenAPI Specification (https://swagger.io/specification/)
+# for the Remote Signing Service API
+# owned by NHS Digital (https://digital.nhs.uk/)
+openapi: "3.0.0"
+info:
+  version: "0.0.1"
+  title: Remote Signing Service API
+  description: |
+    ## Overview
+    TODO
+    
+    You can:
+    * TODO
+
+    You cannot currently use this API to:
+    * TODO
+    
+    You can access the following data:
+    * TODO
+
+    ## Related APIs
+    TODO
+    
+    ## API status and roadmap
+    TODO
+    
+    The following items are on our roadmap, in rough priority order:
+    - TODO
+    
+    We are extremely keen to receive feedback on the API during alpha and beta,
+    for example if there are data fields missing that you think you need.
+    Please [get in touch](/help-and-support) with any comments or suggestions.
+
+    ## Technology
+    TODO
+
+    ## Authorisation
+    TODO
+    
+    ## Testing
+    TODO
+
+    ## Assurance
+    TODO
+
+    ## Endpoints
+    TODO
+  contact:
+    name: Template API Support
+    url: 'https://tbc.api.nhs.net'
+    email: tbc-api-support@nhs.net
+servers:
+  - url: 'https://internal-dev.api.service.nhs.uk/eps-steel-thread'
+    description: Internal service.
+tags:
+  - name: remote-signing-api
+paths:
+  /test/sign:
+    post:
+      summary: Sign some data.
+      operationId: sign
+      description: |
+        Sign some data.
+        Use this API alongside our [open-access REST API tutorial](https://digital.nhs.uk/developer/api-tutorials#open-access-rest-api-tutorial) to learn how to connect to our APIs.
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "{}"
+              example:
+                message: "{}"
+      tags:
+        - sign
+
+  /test/verify:
+    post:
+      summary: Verify some data was signed by this API.
+      operationId: verify
+      description: |
+        Verify data was signed by this API.
+        Use this API alongside our [open-access REST API tutorial](https://digital.nhs.uk/developer/api-tutorials#open-access-rest-api-tutorial) to learn how to connect to our APIs.
+      responses:
+        '200':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "{}"
+              example:
+                message: "{}"
+      tags:
+        - verify

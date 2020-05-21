@@ -35,3 +35,16 @@ zip handler.zip handler.py
     * Run `$(python set_environment_variables.py)`.
     * Run `terraform init -backend-config=.backend.config`.
     * Run `terraform apply`.
+
+## API Specification
+
+### Install dependencies
+
+* Install poetry: https://python-poetry.org/docs/#installation
+* **If using python3:** set `alias python=python3` in ~/.bashrc and `source ~/.bashrc` to apply changes to your current shell and then run `sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 10`
+* Install npm using nvm: https://github.com/nvm-sh/nvm#installing-and-updating
+* Install poetry and npm packages: `make install-api-specification-dependencies`
+
+### Create a specification locally
+
+* `make build-api-specification`
