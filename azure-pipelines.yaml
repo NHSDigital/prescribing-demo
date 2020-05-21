@@ -56,6 +56,15 @@ steps:
 - bash: "make build-api"
   displayName: 'build api proxy'
 
+- bash: "make install-api-specification-dependencies"
+  displayName: 'install api specification dependencies'
+
+- bash: "make build-api-specification"
+  displayName: 'build api specification'
+
+- bash: 'echo "##vso[task.setvariable variable=SPEC_VERSION]$(cd specification && poetry run python calculate_version.py)"'
+  displayName: Set SPEC_VERSION
+
 - script: cp -R build/. dist/
   displayName: 'Copy build to dist'
 
@@ -63,4 +72,4 @@ steps:
   displayName: 'Copy proxy terraform'
 
 - publish: dist/
-  artifact: eps-steel-thread
+  artifact: eps-steel-thread-$(SPEC_VERSION)+$(Build.BuildNumber)
