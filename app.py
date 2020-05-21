@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 import httpx
 import uvicorn
 from fastapi import FastAPI
+from starlette.requests import Request
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
@@ -21,10 +22,11 @@ APP_NAME = os.environ["APP_NAME"]
 
 
 @app.get("/")
-def read_root():
+def read_root(request: Request):
     return templates.TemplateResponse(
         "client.html",
         {
+            "request": request,
             "signin_url": get_signin_url(),
             "bearer_token": None,
         }
@@ -32,7 +34,7 @@ def read_root():
 
 
 @app.get("/callback")
-def do_callback(code: str):
+def do_callback(request: Request, code: str):
     formdata = {
         "grant_type": "authorization_code",
         "code": code,
@@ -45,6 +47,7 @@ def do_callback(code: str):
     return templates.TemplateResponse(
         "client.html",
         {
+            "request": request,
             "signin_url": get_signin_url(),
             "bearer_token": response_json["access_token"],
         },
@@ -57,8 +60,7 @@ def get_signin_url():
         "redirect_uri": REDIRECT_URI,
         "response_type": "code"
     }
-    signin_url = OAUTH_SERVER_BASE_PATH + "authorize?" + urlencode(query_params)
-    return signin_url
+    return OAUTH_SERVER_BASE_PATH + "authorize?" + urlencode(query_params)
 
 
 if __name__ == "__main__":
