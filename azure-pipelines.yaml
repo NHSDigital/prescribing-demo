@@ -33,6 +33,7 @@ steps:
 
 - bash: sh ./scripts/bundle_python.sh
   displayName: Create python deployment package
+  workingDirectory: ./lambda
 
 - script: mkdir dist
   displayName: 'create a dist folder'

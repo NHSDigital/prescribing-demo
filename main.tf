@@ -36,12 +36,12 @@ resource "aws_iam_role_policy_attachment" "policy-attachment" {
 }
 
 resource "aws_lambda_function" "test_lambda" {
-  filename      = "handler.zip"
+  filename      = "lambda/handler.zip"
   function_name = "${var.project-name}-test-lambda"
   role          = aws_iam_role.lambda-execution-role.arn
   handler       = "handler.main_handler"
 
-  source_code_hash = filebase64sha256("handler.zip")
+  source_code_hash = filebase64sha256("lambda/handler.zip")
 
   runtime = "python3.8"
 }

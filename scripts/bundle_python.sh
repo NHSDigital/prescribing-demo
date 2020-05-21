@@ -8,4 +8,4 @@ cd $SITE_PACKAGES
 zip -r9 $DIR/handler.zip *
 
 cd $DIR
-zip -g handler.zip lambda/handler.py
+zip -g handler.zip handler.py
