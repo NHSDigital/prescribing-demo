@@ -20,8 +20,8 @@ steps:
     versionSpec: '3.8' 
     addToPath: true
 
-- script: pip install --user pipenv
-  displayName: 'Install pipenv'
+- script: pip install --user pipenv && pip install poetry
+  displayName: 'Install python dependencies'
 
 - script: ~/.local/bin/pipenv --python 3.8 && ~/.local/bin/pipenv install --dev
   displayName: Install dependencies
