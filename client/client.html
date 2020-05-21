@@ -83,11 +83,9 @@
             <div class="nhsuk-grid-row">
                 <div class="nhsuk-grid-column-two-thirds">
                     <div class="nhsuk-form-group">
-                        <div class="nhsuk-form-group">
-                            <label class="nhsuk-label" for="verify-signature-value">Signature</label>
-                            <span class="nhsuk-hint" id="verify-signature-hint">This is the signature returned from the signing page</span>
-                            <input class="nhsuk-input" id="verify-signature-value" type="text" aria-describedby="verify-signature-hint" rv-value="verifySignature">
-                        </div>
+                        <label class="nhsuk-label" for="verify-signature-value">Signature</label>
+                        <span class="nhsuk-hint" id="verify-signature-hint">This is the signature returned from the signing page.</span>
+                        <textarea class="nhsuk-textarea" id="verify-signature-value" rows="5" aria-describedby="verify-signature-hint" rv-value="signature"></textarea>
                     </div>
                 </div>
             </div>
@@ -119,7 +117,7 @@
                     <dl class="nhsuk-summary-list">
                         <div class="nhsuk-summary-list__row" rv-each-name="signRequestSummary.patient.name">
                             <dt class="nhsuk-summary-list__key">Name</dt>
-                            <dd class="nhsuk-summary-list__value">{name | fullName}</dd>
+                            <dd class="nhsuk-summary-list__value">{name | fullName | joinWithSpaces}</dd>
                         </div>
                         <div class="nhsuk-summary-list__row">
                             <dt class="nhsuk-summary-list__key">NHS number</dt>
@@ -135,7 +133,11 @@
                         </div>
                         <div class="nhsuk-summary-list__row" rv-each-address="signRequestSummary.patient.address">
                             <dt class="nhsuk-summary-list__key">Address</dt>
-                            <dd class="nhsuk-summary-list__value">{address | fullAddress}</dd>
+                            <dd class="nhsuk-summary-list__value">
+                                <div rv-each-line="address | fullAddress">
+                                    {line}<br>
+                                </div>
+                            </dd>
                         </div>
                     </dl>
                 </div>
@@ -176,7 +178,7 @@
                     <dl class="nhsuk-summary-list">
                         <div class="nhsuk-summary-list__row" rv-each-name="signRequestSummary.practitioner.name">
                             <dt class="nhsuk-summary-list__key">Name</dt>
-                            <dd class="nhsuk-summary-list__value">{name | fullName}</dd>
+                            <dd class="nhsuk-summary-list__value">{name | fullName | joinWithSpaces}</dd>
                         </div>
                         <div class="nhsuk-summary-list__row">
                             <dt class="nhsuk-summary-list__key">Organization</dt>
@@ -184,7 +186,11 @@
                         </div>
                         <div class="nhsuk-summary-list__row" rv-each-address="signRequestSummary.prescribingOrganization.address">
                             <dt class="nhsuk-summary-list__key">Address</dt>
-                            <dd class="nhsuk-summary-list__value">{address | fullAddress}</dd>
+                            <dd class="nhsuk-summary-list__value">
+                                <div rv-each-line="address | fullAddress">
+                                    {line}<br>
+                                </div>
+                            </dd>
                         </div>
                         <div class="nhsuk-summary-list__row">
                             <dt class="nhsuk-summary-list__key">Trust / CCG</dt>

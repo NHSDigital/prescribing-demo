@@ -31,7 +31,7 @@ rivets.formatters.snomedCodeDescription = function(codings) {
     return codings.filter(coding => coding.system === "http://snomed.info/sct")[0].display
 }
 
-rivets.formatters.nhsNumber = function (identifiers) {
+rivets.formatters.nhsNumber = function(identifiers) {
     const nhsNumber = identifiers.filter(identifier => identifier.system === "https://fhir.nhs.uk/Id/nhs-number")[0].value;
     return nhsNumber.substring(0, 3) + " " + nhsNumber.substring(3, 6) + " " + nhsNumber.substring(6)
 }
@@ -46,7 +46,7 @@ rivets.formatters.titleCase = function(string) {
 }
 
 rivets.formatters.fullName = function(name) {
-    return concatenateWithSpacesIfPresent([
+    return concatenateIfPresent([
         name.family,
         name.given,
         surroundWithParenthesesIfPresent(name.prefix),
@@ -54,8 +54,8 @@ rivets.formatters.fullName = function(name) {
     ])
 }
 
-rivets.formatters.fullAddress = function (address) {
-    return concatenateWithSpacesIfPresent([
+rivets.formatters.fullAddress = function(address) {
+    return concatenateIfPresent([
         address.line,
         address.city,
         address.district,
@@ -73,14 +73,12 @@ rivets.formatters.isVerify = function (mode) {
     return mode === "verify"
 }
 
-function concatenateWithSpacesIfPresent(fields) {
-    let fieldValues = []
-    fields.forEach(field => {
-        if (field) {
-            fieldValues = fieldValues.concat(field)
-        }
-    })
-    return fieldValues.join(" ")
+rivets.formatters.joinWithSpaces = function(strings) {
+    return strings.join(" ")
+}
+
+function concatenateIfPresent(fields) {
+    return fields.filter(field => field).reduce((currentValues, valuesToAdd) => currentValues.concat(valuesToAdd), [])
 }
 
 function surroundWithParenthesesIfPresent(fields) {
@@ -93,10 +91,13 @@ function surroundWithParenthesesIfPresent(fields) {
 
 function sendRequest() {
     const xhr = new XMLHttpRequest()
+
     xhr.onload = handleResponse
     xhr.onerror = handleError
     xhr.ontimeout = handleTimeout
+
     xhr.open("POST", requestAddress + pageData.mode)
+
     xhr.setRequestHeader("Content-Type", "application/json")
     if (pageData.bearerToken && pageData.bearerToken !== "") {
         xhr.setRequestHeader("Authorization", "Bearer " + pageData.bearerToken)
@@ -104,7 +105,7 @@ function sendRequest() {
     if (pageData.sessionUrid && pageData.sessionUrid !== "") {
         xhr.setRequestHeader("NHSD-Session-URID", pageData.sessionUrid)
     }
-    console.log(JSON.stringify(payload))
+
     if (pageData.mode === "sign") {
         const signRequest = {
             "payload": btoa(JSON.stringify(payload))
@@ -113,7 +114,7 @@ function sendRequest() {
     } else {
         const verifyRequest = {
             "payload": btoa(JSON.stringify(payload)),
-            "signature": document.getElementById("verify-signature-value").value
+            "signature": pageData.signature
         }
         xhr.send(JSON.stringify(verifyRequest))
     }
@@ -150,14 +151,14 @@ function addError(message) {
     })
 }
 
-function getSummary(signRequest) {
-    const patient = getResourcesOfType(signRequest, "Patient")[0]
-    const practitioner = getResourcesOfType(signRequest, "Practitioner")[0]
-    const encounter = getResourcesOfType(signRequest, "Encounter")[0]
-    const organizations = getResourcesOfType(signRequest, "Organization")
+function getSummary(payload) {
+    const patient = getResourcesOfType(payload, "Patient")[0]
+    const practitioner = getResourcesOfType(payload, "Practitioner")[0]
+    const encounter = getResourcesOfType(payload, "Encounter")[0]
+    const organizations = getResourcesOfType(payload, "Organization")
     const prescribingOrganization = organizations.filter(organization => "urn:uuid:" + organization.id === encounter.serviceProvider.reference)[0]
     const parentOrganization = organizations.filter(organization => "urn:uuid:" + organization.id === prescribingOrganization.partOf.reference)[0]
-    const medicationRequests = getResourcesOfType(signRequest, "MedicationRequest")
+    const medicationRequests = getResourcesOfType(payload, "MedicationRequest")
     return {
         patient: patient,
         practitioner: practitioner,
