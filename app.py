@@ -34,7 +34,7 @@ def read_root(request: Request):
 
 
 @app.get("/callback")
-def do_callback(request: Request, code: str):
+def do_callback(request: Request, code: str, state: str):
     formdata = {
         "grant_type": "authorization_code",
         "code": code,
@@ -58,7 +58,8 @@ def get_signin_url():
     query_params = {
         "client_id": CLIENT_ID,
         "redirect_uri": REDIRECT_URI,
-        "response_type": "code"
+        "response_type": "code",
+        "state": "1234567890",
     }
     return OAUTH_SERVER_BASE_PATH + "authorize?" + urlencode(query_params)
 
