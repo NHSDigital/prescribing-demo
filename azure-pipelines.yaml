@@ -31,8 +31,9 @@ steps:
   displayName: Run tests in python package
   workingDirectory: ./lambda
 
-- bash: sh ./scripts/bundle_python.sh
+- bash: sh ../scripts/bundle_python.sh
   displayName: Create python deployment package
+  workingDirectory: ./lambda
 
 - script: mkdir dist
   displayName: 'create a dist folder'
@@ -40,7 +41,7 @@ steps:
 - script: mkdir dist/client
   displayName: 'create a client folder'
 
-- script: mv handler.zip dist/handler.zip
+- script: mv lambda/handler.zip dist/handler.zip
   displayName: 'move handler files into dist'
   
 - script: mv client/** dist/client

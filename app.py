@@ -5,7 +5,6 @@ from urllib.parse import urlencode
 import httpx
 import uvicorn
 from fastapi import FastAPI
-from starlette.requests import Request
 from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
@@ -22,26 +21,18 @@ APP_NAME = os.environ["APP_NAME"]
 
 
 @app.get("/")
-def read_root(request: Request):
-    query_params = {
-        "client_id": CLIENT_ID,
-        "redirect_uri": REDIRECT_URI,
-        "response_type": "code",
-        "state": "1234567890",
-    }
-    signin_url = OAUTH_SERVER_BASE_PATH + "authorize?" + urlencode(query_params)
+def read_root():
     return templates.TemplateResponse(
         "client.html",
         {
-            "request": request,
-            "signin_url": signin_url,
+            "signin_url": get_signin_url(),
             "bearer_token": None,
         }
     )
 
 
 @app.get("/callback")
-def do_callback(request: Request, code: str, state: str):
+def do_callback(code: str):
     formdata = {
         "grant_type": "authorization_code",
         "code": code,
@@ -54,10 +45,20 @@ def do_callback(request: Request, code: str, state: str):
     return templates.TemplateResponse(
         "client.html",
         {
-            "request": request,
+            "signin_url": get_signin_url(),
             "bearer_token": response_json["access_token"],
         },
     )
+
+
+def get_signin_url():
+    query_params = {
+        "client_id": CLIENT_ID,
+        "redirect_uri": REDIRECT_URI,
+        "response_type": "code"
+    }
+    signin_url = OAUTH_SERVER_BASE_PATH + "authorize?" + urlencode(query_params)
+    return signin_url
 
 
 if __name__ == "__main__":
