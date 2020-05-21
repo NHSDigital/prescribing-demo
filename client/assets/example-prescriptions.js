@@ -1,15 +1,14 @@
-function uuid()
+let uuidNumber = 0
+function deterministicNextUuid()
 {
-  let seed = Date.now();
-  if (window.performance && typeof window.performance.now === "function") {
-    seed += performance.now();
-  }
-
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = (seed + Math.random() * 16) % 16 | 0;
-    seed = Math.floor(seed / 16);
-    return (c === 'x' ? r : r & (0x3 | 0x8)).toString(16);
-  });
+  uuidNumber++
+  const uuidNumberStr = uuidNumber.toString(16)
+  const uuidNumberStrPadded = uuidNumberStr.padStart(32, "0")
+  return uuidNumberStrPadded.substring(0, 8) + "-"
+      + uuidNumberStrPadded.substring(8, 12) + "-"
+      + uuidNumberStrPadded.substring(12, 16) + "-"
+      + uuidNumberStrPadded.substring(16, 20) + "-"
+      + uuidNumberStrPadded.substring(20, 32)
 }
 
 function CodeAndDesc(code, desc) {
@@ -68,7 +67,7 @@ function Entry(resource) {
 
 function Organization(odsCode, type, name) {
   this.resourceType = "Organization"
-  this.id = uuid()
+  this.id = deterministicNextUuid()
   this.identifier = [
       new Identifier("https://fhir.nhs.uk/Id/ods-organization-code", odsCode)
   ]
@@ -99,7 +98,7 @@ Organization.prototype.setParent = function (organization) {
 
 function Encounter(organization) {
   this.resourceType = "Encounter"
-  this.id = uuid()
+  this.id = deterministicNextUuid()
   this.status = "finished"
   this.class = new Coding("http://terminology.hl7.org/CodeSystem/v3-ActCode", "AMB")
   this.serviceProvider = {
@@ -109,7 +108,7 @@ function Encounter(organization) {
 
 function Practitioner(sdsUserId, sdsJobRoleId, sdsRoleProfileId) {
   this.resourceType = "Practitioner"
-  this.id = uuid()
+  this.id = deterministicNextUuid()
   this.identifier = [
       new Identifier("https://fhir.nhs.uk/Id/sds-user-id", sdsUserId),
       new Identifier("https://fhir.nhs.uk/Id/sds-job-role-id", sdsJobRoleId),
@@ -131,7 +130,7 @@ Practitioner.prototype.addTelecom = function(telecom) {
 
 function Patient(nhsNumber, gender, dateOfBirth) {
   this.resourceType = "Patient"
-  this.id = uuid()
+  this.id = deterministicNextUuid()
   this.identifier = [
       new Identifier("https://fhir.nhs.uk/Id/nhs-number", nhsNumber)
   ]
@@ -157,7 +156,7 @@ function DosageInstruction(textualDose) {
 
 function MedicationRequest(medicationCode, quantity, authoredOn) {
   this.resourceType = "MedicationRequest"
-  this.id = uuid()
+  this.id = deterministicNextUuid()
   this.status = "active"
   this.intent = "order"
   this.medicationCodeableConcept = {
@@ -194,7 +193,7 @@ MedicationRequest.prototype.setRequester = function (practitioner) {
 
 function Bundle() {
   this.resourceType = "Bundle"
-  this.id = uuid()
+  this.id = deterministicNextUuid()
   this.type = "collection"
 }
 Bundle.prototype.addEntry = function (entry) {

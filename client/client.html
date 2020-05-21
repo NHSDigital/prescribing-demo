@@ -32,36 +32,63 @@
     <main class="nhsuk-main-wrapper" id="main-content">
         <div class="nhsuk-grid-row">
             <div class="nhsuk-grid-column-two-thirds">
+                <button class="nhsuk-button" rv-class-nhsuk-button--secondary="mode | isVerify" id="signingModeButton" onclick="changeModeToSign()">Sign</button>
+                <button class="nhsuk-button" rv-class-nhsuk-button--secondary="mode | isSign" id="verifyModeButton" onclick="changeModeToVerify()">Verify</button>
+            </div>
+        </div>
+
+        <div class="nhsuk-grid-row">
+            <div class="nhsuk-grid-column-two-thirds">
                 <fieldset class="nhsuk-fieldset">
                     <legend class="nhsuk-fieldset__legend nhsuk-fieldset__legend--xl">
-                        <h1 class="nhsuk-fieldset__heading">Review and sign</h1>
+                        <div rv-show="mode | isSign">
+                            <h1 class="nhsuk-fieldset__heading">Review and sign</h1>
+                        </div>
+                        <div rv-show="mode | isVerify">
+                            <h1 class="nhsuk-fieldset__heading">Verify</h1>
+                        </div>
                     </legend>
                 </fieldset>
             </div>
         </div>
-        <div class="nhsuk-grid-row">
-            <div class="nhsuk-grid-column-two-thirds">
-                <div class="nhsuk-form-group">
-                    <label class="nhsuk-label" for="session-urid">Session URID</label>
-                    <input class="nhsuk-input" id="session-urid" type="text" rv-value="sessionUrid">
+        <div rv-show="mode | isSign">
+            <div class="nhsuk-grid-row">
+                <div class="nhsuk-grid-column-two-thirds">
+                    <div class="nhsuk-form-group">
+                        <label class="nhsuk-label" for="session-urid">Session URID</label>
+                        <input class="nhsuk-input" id="session-urid" type="text" rv-value="sessionUrid">
+                    </div>
+                    <div class="nhsuk-form-group">
+                        <label class="nhsuk-label" for="bearer-token">Access token</label>
+                        <span class="nhsuk-hint" id="bearer-token-hint">This is returned upon authentication with the identity server.</span>
+                        <input class="nhsuk-input" id="bearer-token" type="text" aria-describedby="bearer-token-hint" rv-value="bearerToken">
+                    </div>
                 </div>
-                <div class="nhsuk-form-group">
-                    <label class="nhsuk-label" for="bearer-token">Access token</label>
-                    <span class="nhsuk-hint" id="bearer-token-hint">This is returned upon authentication with the identity server.</span>
-                    <input class="nhsuk-input" id="bearer-token" type="text" aria-describedby="bearer-token-hint" rv-value="bearerToken">
+            </div>
+            <div class="nhsuk-grid-row" rv-hide="bearerToken">
+                <div class="nhsuk-grid-column-two-thirds">
+                    <div class="nhsuk-action-link">
+                        <a class="nhsuk-action-link__link" href="{{signin_url}}">
+                            <svg class="nhsuk-icon nhsuk-icon__arrow-right-circle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M0 0h24v24H0z" fill="none"></path>
+                                <path d="M12 2a10 10 0 0 0-9.95 9h11.64L9.74 7.05a1 1 0 0 1 1.41-1.41l5.66 5.65a1 1 0 0 1 0 1.42l-5.66 5.65a1 1 0 0 1-1.41 0 1 1 0 0 1 0-1.41L13.69 13H2.05A10 10 0 1 0 12 2z"></path>
+                            </svg>
+                            <span class="nhsuk-action-link__text">Request access token</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="nhsuk-grid-row" rv-hide="bearerToken">
-            <div class="nhsuk-grid-column-two-thirds">
-                <div class="nhsuk-action-link">
-                    <a class="nhsuk-action-link__link" href="{{signin_url}}">
-                        <svg class="nhsuk-icon nhsuk-icon__arrow-right-circle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M0 0h24v24H0z" fill="none"></path>
-                            <path d="M12 2a10 10 0 0 0-9.95 9h11.64L9.74 7.05a1 1 0 0 1 1.41-1.41l5.66 5.65a1 1 0 0 1 0 1.42l-5.66 5.65a1 1 0 0 1-1.41 0 1 1 0 0 1 0-1.41L13.69 13H2.05A10 10 0 1 0 12 2z"></path>
-                        </svg>
-                        <span class="nhsuk-action-link__text">Request access token</span>
-                    </a>
+        <div rv-show="mode | isVerify">
+            <div class="nhsuk-grid-row">
+                <div class="nhsuk-grid-column-two-thirds">
+                    <div class="nhsuk-form-group">
+                        <div class="nhsuk-form-group">
+                            <label class="nhsuk-label" for="verify-signature-value">Signature</label>
+                            <span class="nhsuk-hint" id="verify-signature-hint">This is the signature returned from the signing page</span>
+                            <input class="nhsuk-input" id="verify-signature-value" type="text" aria-describedby="verify-signature-hint" rv-value="verifySignature">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -69,7 +96,12 @@
             <div class="nhsuk-grid-column-two-thirds">
                 <div class="nhsuk-form-group">
                     <fieldset class="nhsuk-fieldset" aria-describedby="example-hint">
-                        <legend class="nhsuk-fieldset__legend nhsuk-fieldset__legend--m">Select a prescription to sign</legend>
+                        <div rv-show="mode | isSign">
+                            <legend class="nhsuk-fieldset__legend nhsuk-fieldset__legend--m">Select a prescription to sign</legend>
+                        </div>
+                        <div rv-show="mode | isVerify">
+                            <legend class="nhsuk-fieldset__legend nhsuk-fieldset__legend--m">Select a prescription to verify</legend>
+                        </div>
                         <span class="nhsuk-hint" id="example-hint">Select from a list of predefined example prescriptions.</span>
                         <ol class="nhsuk-contents-list__list">
                             <li class="nhsuk-contents-list__item" rv-each-example="examples">
@@ -162,10 +194,20 @@
                 </div>
             </div>
         </div>
-        <div class="nhsuk-grid-row">
-            <div class="nhsuk-grid-column-two-thirds">
-                <button class="nhsuk-button" type="submit" onclick="sendRequest()">Sign prescription</button>
-                <button class="nhsuk-button nhsuk-button--secondary" type="submit" onclick="resetPageData()">Reset</button>
+        <div rv-show="mode | isSign">
+            <div class="nhsuk-grid-row">
+                <div class="nhsuk-grid-column-two-thirds">
+                    <button class="nhsuk-button" type="submit" onclick="sendRequest()">Sign prescription</button>
+                    <button class="nhsuk-button nhsuk-button--secondary" type="submit" onclick="resetPageData()">Reset</button>
+                </div>
+            </div>
+        </div>
+        <div rv-show="mode | isVerify">
+            <div class="nhsuk-grid-row">
+                <div class="nhsuk-grid-column-two-thirds">
+                    <button class="nhsuk-button" type="submit" onclick="sendRequest()">Verify signature</button>
+                    <button class="nhsuk-button nhsuk-button--secondary" type="submit" onclick="resetPageData()">Reset</button>
+                </div>
             </div>
         </div>
         <div class="nhsuk-grid-row" rv-show="errorList">

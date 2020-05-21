@@ -10,7 +10,7 @@ pr:
 
 steps:
 - script: sudo apt update
-  displayName: 'Update OS'
+  displayName: 'Update apt package lists'
 
 - script: sudo apt install python3-setuptools
   displayName: 'Install setuptools'

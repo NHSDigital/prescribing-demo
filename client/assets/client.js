@@ -1,21 +1,25 @@
-let signRequest = {}
+let payload = {}
+
+const requestAddress = "https://internal-dev.api.service.nhs.uk/eps-steel-thread/test/"
+
 const pageData = {
     examples: [
         new Example("Single line item", EXAMPLE_PRESCRIPTION_SINGLE_LINE_ITEM),
         new Example("Multiple line items", EXAMPLE_PRESCRIPTION_MULTIPLE_LINE_ITEMS)
-    ]
+    ],
+    mode: "sign"
 }
 
 function Example(description, message) {
     this.description = description
     this.message = message
     this.select = function () {
-        changeMessage(message)
+        changePayload(message)
     }
 }
 
-function changeMessage(message) {
-    signRequest = message
+function changePayload(newPayload) {
+    payload = newPayload
     resetPageData()
 }
 
@@ -61,6 +65,14 @@ rivets.formatters.fullAddress = function (address) {
     ])
 }
 
+rivets.formatters.isSign = function (mode) {
+    return mode === "sign"
+}
+
+rivets.formatters.isVerify = function (mode) {
+    return mode === "verify"
+}
+
 function concatenateWithSpacesIfPresent(fields) {
     let fieldValues = []
     fields.forEach(field => {
@@ -84,7 +96,7 @@ function sendRequest() {
     xhr.onload = handleResponse
     xhr.onerror = handleError
     xhr.ontimeout = handleTimeout
-    xhr.open("POST", "https://internal-dev.api.service.nhs.uk/eps-steel-thread/test/sign")
+    xhr.open("POST", requestAddress + pageData.mode)
     xhr.setRequestHeader("Content-Type", "application/json")
     if (pageData.bearerToken && pageData.bearerToken !== "") {
         xhr.setRequestHeader("Authorization", "Bearer " + pageData.bearerToken)
@@ -92,7 +104,19 @@ function sendRequest() {
     if (pageData.sessionUrid && pageData.sessionUrid !== "") {
         xhr.setRequestHeader("NHSD-Session-URID", pageData.sessionUrid)
     }
-    xhr.send(JSON.stringify(signRequest))
+    console.log(JSON.stringify(payload))
+    if (pageData.mode === "sign") {
+        const signRequest = {
+            "payload": btoa(JSON.stringify(payload))
+        }
+        xhr.send(JSON.stringify(signRequest))
+    } else {
+        const verifyRequest = {
+            "payload": btoa(JSON.stringify(payload)),
+            "signature": document.getElementById("verify-signature-value").value
+        }
+        xhr.send(JSON.stringify(verifyRequest))
+    }
 }
 
 function handleResponse() {
@@ -155,7 +179,7 @@ function onLoad() {
 }
 
 function resetPageData() {
-    pageData.signRequestSummary = getSummary(signRequest)
+    pageData.signRequestSummary = getSummary(payload)
     pageData.signResponse = null
     pageData.errorList = null
     //pageData.bearerToken = null
@@ -164,4 +188,12 @@ function resetPageData() {
 
 function bind() {
     rivets.bind(document.querySelector('#main-content'), pageData)
+}
+
+function changeModeToVerify() {
+    pageData.mode = "verify"
+}
+
+function changeModeToSign() {
+    pageData.mode = "sign"
 }
