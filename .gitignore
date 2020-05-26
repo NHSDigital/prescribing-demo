@@ -9,5 +9,5 @@ package
 .envrc
 .vscode
 .venv
-.env
+client/.env
 __pycache__

@@ -1,26 +1,21 @@
-let payload = {}
-
-const requestAddress = "https://internal-dev.api.service.nhs.uk/eps-steel-thread/test/"
-
 const pageData = {
     examples: [
-        new Example("Single line item", EXAMPLE_PRESCRIPTION_SINGLE_LINE_ITEM),
-        new Example("Multiple line items", EXAMPLE_PRESCRIPTION_MULTIPLE_LINE_ITEMS)
+        new Example("example-1", "Single line item", EXAMPLE_PRESCRIPTION_SINGLE_LINE_ITEM),
+        new Example("example-2", "Multiple line items", EXAMPLE_PRESCRIPTION_MULTIPLE_LINE_ITEMS)
     ],
-    mode: "sign"
+    mode: "sign",
+    signature: "",
+    loggedIn: Cookies.get("Access-Token-Set") === "true"
 }
 
-function Example(description, message) {
+function Example(id, description, message) {
+    this.id = id
     this.description = description
     this.message = message
     this.select = function () {
-        changePayload(message)
+        pageData.selectedExampleId = id
+        resetPageData()
     }
-}
-
-function changePayload(newPayload) {
-    payload = newPayload
-    resetPageData()
 }
 
 rivets.formatters.snomedCode = function(codings) {
@@ -31,7 +26,7 @@ rivets.formatters.snomedCodeDescription = function(codings) {
     return codings.filter(coding => coding.system === "http://snomed.info/sct")[0].display
 }
 
-rivets.formatters.nhsNumber = function (identifiers) {
+rivets.formatters.nhsNumber = function(identifiers) {
     const nhsNumber = identifiers.filter(identifier => identifier.system === "https://fhir.nhs.uk/Id/nhs-number")[0].value;
     return nhsNumber.substring(0, 3) + " " + nhsNumber.substring(3, 6) + " " + nhsNumber.substring(6)
 }
@@ -46,16 +41,16 @@ rivets.formatters.titleCase = function(string) {
 }
 
 rivets.formatters.fullName = function(name) {
-    return concatenateWithSpacesIfPresent([
-        name.family,
+    return concatenateIfPresent([
+        toUpperCaseIfPresent(name.family),
         name.given,
         surroundWithParenthesesIfPresent(name.prefix),
         surroundWithParenthesesIfPresent(name.suffix)
     ])
 }
 
-rivets.formatters.fullAddress = function (address) {
-    return concatenateWithSpacesIfPresent([
+rivets.formatters.fullAddress = function(address) {
+    return concatenateIfPresent([
         address.line,
         address.city,
         address.district,
@@ -73,14 +68,16 @@ rivets.formatters.isVerify = function (mode) {
     return mode === "verify"
 }
 
-function concatenateWithSpacesIfPresent(fields) {
-    let fieldValues = []
-    fields.forEach(field => {
-        if (field) {
-            fieldValues = fieldValues.concat(field)
-        }
-    })
-    return fieldValues.join(" ")
+rivets.formatters.joinWithSpaces = function(strings) {
+    return strings.join(" ")
+}
+
+rivets.formatters.appendPageMode = function (string) {
+    return string + pageData.mode
+}
+
+function concatenateIfPresent(fields) {
+    return fields.filter(field => field).reduce((currentValues, valuesToAdd) => currentValues.concat(valuesToAdd), [])
 }
 
 function surroundWithParenthesesIfPresent(fields) {
@@ -91,29 +88,34 @@ function surroundWithParenthesesIfPresent(fields) {
     }
 }
 
+function toUpperCaseIfPresent(field) {
+    if (field) {
+        return field.toUpperCase()
+    } else {
+        return field
+    }
+}
+
 function sendRequest() {
     const xhr = new XMLHttpRequest()
+
     xhr.onload = handleResponse
     xhr.onerror = handleError
     xhr.ontimeout = handleTimeout
-    xhr.open("POST", requestAddress + pageData.mode)
+
+    xhr.open("POST", "/" + pageData.mode)
     xhr.setRequestHeader("Content-Type", "application/json")
-    if (pageData.bearerToken && pageData.bearerToken !== "") {
-        xhr.setRequestHeader("Authorization", "Bearer " + pageData.bearerToken)
-    }
-    if (pageData.sessionUrid && pageData.sessionUrid !== "") {
-        xhr.setRequestHeader("NHSD-Session-URID", pageData.sessionUrid)
-    }
-    console.log(JSON.stringify(payload))
+
+    const payload = JSON.stringify(getPayload())
     if (pageData.mode === "sign") {
         const signRequest = {
-            "payload": btoa(JSON.stringify(payload))
+            "payload": btoa(payload)
         }
         xhr.send(JSON.stringify(signRequest))
     } else {
         const verifyRequest = {
-            "payload": btoa(JSON.stringify(payload)),
-            "signature": document.getElementById("verify-signature-value").value
+            "payload": btoa(payload),
+            "signature": pageData.signature
         }
         xhr.send(JSON.stringify(verifyRequest))
     }
@@ -150,14 +152,14 @@ function addError(message) {
     })
 }
 
-function getSummary(signRequest) {
-    const patient = getResourcesOfType(signRequest, "Patient")[0]
-    const practitioner = getResourcesOfType(signRequest, "Practitioner")[0]
-    const encounter = getResourcesOfType(signRequest, "Encounter")[0]
-    const organizations = getResourcesOfType(signRequest, "Organization")
+function getSummary(payload) {
+    const patient = getResourcesOfType(payload, "Patient")[0]
+    const practitioner = getResourcesOfType(payload, "Practitioner")[0]
+    const encounter = getResourcesOfType(payload, "Encounter")[0]
+    const organizations = getResourcesOfType(payload, "Organization")
     const prescribingOrganization = organizations.filter(organization => "urn:uuid:" + organization.id === encounter.serviceProvider.reference)[0]
     const parentOrganization = organizations.filter(organization => "urn:uuid:" + organization.id === prescribingOrganization.partOf.reference)[0]
-    const medicationRequests = getResourcesOfType(signRequest, "MedicationRequest")
+    const medicationRequests = getResourcesOfType(payload, "MedicationRequest")
     return {
         patient: patient,
         practitioner: practitioner,
@@ -166,6 +168,10 @@ function getSummary(signRequest) {
         parentOrganization: parentOrganization,
         medicationRequests: medicationRequests
     }
+}
+
+function getPayload() {
+    return pageData.examples.filter(example => example.id === pageData.selectedExampleId)[0].message
 }
 
 function getResourcesOfType(prescriptionBundle, resourceType) {
@@ -179,21 +185,11 @@ function onLoad() {
 }
 
 function resetPageData() {
-    pageData.signRequestSummary = getSummary(payload)
+    pageData.signRequestSummary = getSummary(getPayload())
     pageData.signResponse = null
     pageData.errorList = null
-    //pageData.bearerToken = null
-    //pageData.sessionUrid = null
 }
 
 function bind() {
     rivets.bind(document.querySelector('#main-content'), pageData)
-}
-
-function changeModeToVerify() {
-    pageData.mode = "verify"
-}
-
-function changeModeToSign() {
-    pageData.mode = "sign"
 }

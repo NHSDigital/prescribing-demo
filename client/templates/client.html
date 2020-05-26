@@ -2,13 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>EPS Steel Thread Test Client</title>
+    <title>EPS Demo Client</title>
     <link href="https://nhsuk.github.io/nhsuk-frontend/assets/nhsuk.css" rel="stylesheet">
-    <script type="application/javascript" src="assets/rivets.bundled.min.js"></script>
-    <script type="application/javascript" src="assets/example-prescriptions.js"></script>
-    <script type="application/javascript" src="assets/client.js"></script>
-    {% if bearer_token is not none %}
-    <script type="application/javascript">pageData.bearerToken="{{bearer_token}}"</script>
+    <script type="application/javascript" src="../static/rivets.bundled.min.js"></script>
+    <script type="application/javascript" src="../static/js.cookie-2.2.1.min.js"></script>
+    <script type="application/javascript" src="../static/example-prescriptions.js"></script>
+    <script type="application/javascript" src="../static/client.js"></script>
+    {% if page_mode is not none %}
+    <script type="application/javascript">pageData.mode="{{page_mode}}"</script>
     {% endif %}
 </head>
 <body onload="onLoad()">
@@ -24,7 +25,7 @@
             </a>
         </div>
         <div class="nhsuk-header__transactional-service-name">
-            <a class="nhsuk-header__transactional-service-name--link" href="#">EPS Steel Thread</a>
+            <a class="nhsuk-header__transactional-service-name--link" href="#">EPS Demo Client</a>
         </div>
     </div>
 </header>
@@ -32,11 +33,28 @@
     <main class="nhsuk-main-wrapper" id="main-content">
         <div class="nhsuk-grid-row">
             <div class="nhsuk-grid-column-two-thirds">
-                <button class="nhsuk-button" rv-class-nhsuk-button--secondary="mode | isVerify" id="signingModeButton" onclick="changeModeToSign()">Sign</button>
-                <button class="nhsuk-button" rv-class-nhsuk-button--secondary="mode | isSign" id="verifyModeButton" onclick="changeModeToVerify()">Verify</button>
+                <nav class="nhsuk-pagination" role="navigation" aria-label="Pagination">
+                    <ul class="nhsuk-list nhsuk-pagination__list">
+                        <li class="nhsuk-pagination-item--previous" rv-show="mode | isVerify">
+                            <a class="nhsuk-pagination__link nhsuk-pagination__link--prev" href="/sign">
+                                <span class="nhsuk-pagination__title">Sign</span>
+                                <svg class="nhsuk-icon nhsuk-icon__arrow-left" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M4.1 12.3l2.7 3c.2.2.5.2.7 0 .1-.1.1-.2.1-.3v-2h11c.6 0 1-.4 1-1s-.4-1-1-1h-11V9c0-.2-.1-.4-.3-.5h-.2c-.1 0-.3.1-.4.2l-2.7 3c0 .2 0 .4.1.6z"></path>
+                                </svg>
+                            </a>
+                        </li>
+                        <li class="nhsuk-pagination-item--next" rv-show="mode | isSign">
+                            <a class="nhsuk-pagination__link nhsuk-pagination__link--next" href="/verify">
+                                <span class="nhsuk-pagination__title">Verify</span>
+                                <svg class="nhsuk-icon nhsuk-icon__arrow-right" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M19.6 11.66l-2.73-3A.51.51 0 0 0 16 9v2H5a1 1 0 0 0 0 2h11v2a.5.5 0 0 0 .32.46.39.39 0 0 0 .18 0 .52.52 0 0 0 .37-.16l2.73-3a.5.5 0 0 0 0-.64z"></path>
+                                </svg>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
             </div>
         </div>
-
         <div class="nhsuk-grid-row">
             <div class="nhsuk-grid-column-two-thirds">
                 <fieldset class="nhsuk-fieldset">
@@ -45,35 +63,29 @@
                             <h1 class="nhsuk-fieldset__heading">Review and sign</h1>
                         </div>
                         <div rv-show="mode | isVerify">
-                            <h1 class="nhsuk-fieldset__heading">Verify</h1>
+                            <h1 class="nhsuk-fieldset__heading">Verify signature</h1>
                         </div>
                     </legend>
                 </fieldset>
             </div>
         </div>
-        <div rv-show="mode | isSign">
+        <div>
             <div class="nhsuk-grid-row">
                 <div class="nhsuk-grid-column-two-thirds">
-                    <div class="nhsuk-form-group">
-                        <label class="nhsuk-label" for="session-urid">Session URID</label>
-                        <input class="nhsuk-input" id="session-urid" type="text" rv-value="sessionUrid">
-                    </div>
-                    <div class="nhsuk-form-group">
-                        <label class="nhsuk-label" for="bearer-token">Access token</label>
-                        <span class="nhsuk-hint" id="bearer-token-hint">This is returned upon authentication with the identity server.</span>
-                        <input class="nhsuk-input" id="bearer-token" type="text" aria-describedby="bearer-token-hint" rv-value="bearerToken">
-                    </div>
-                </div>
-            </div>
-            <div class="nhsuk-grid-row" rv-hide="bearerToken">
-                <div class="nhsuk-grid-column-two-thirds">
                     <div class="nhsuk-action-link">
-                        <a class="nhsuk-action-link__link" href="{{signin_url}}">
+                        <a class="nhsuk-action-link__link" rv-hide="loggedIn" rv-href="'/login?state=' | appendPageMode">
                             <svg class="nhsuk-icon nhsuk-icon__arrow-right-circle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M0 0h24v24H0z" fill="none"></path>
                                 <path d="M12 2a10 10 0 0 0-9.95 9h11.64L9.74 7.05a1 1 0 0 1 1.41-1.41l5.66 5.65a1 1 0 0 1 0 1.42l-5.66 5.65a1 1 0 0 1-1.41 0 1 1 0 0 1 0-1.41L13.69 13H2.05A10 10 0 1 0 12 2z"></path>
                             </svg>
-                            <span class="nhsuk-action-link__text">Request access token</span>
+                            <span class="nhsuk-action-link__text">Sign in</span>
+                        </a>
+                        <a class="nhsuk-action-link__link" rv-show="loggedIn" rv-href="'/logout?state=' | appendPageMode">
+                            <svg class="nhsuk-icon nhsuk-icon__arrow-right-circle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M0 0h24v24H0z" fill="none"></path>
+                                <path d="M12 2a10 10 0 0 0-9.95 9h11.64L9.74 7.05a1 1 0 0 1 1.41-1.41l5.66 5.65a1 1 0 0 1 0 1.42l-5.66 5.65a1 1 0 0 1-1.41 0 1 1 0 0 1 0-1.41L13.69 13H2.05A10 10 0 1 0 12 2z"></path>
+                            </svg>
+                            <span class="nhsuk-action-link__text">Sign out</span>
                         </a>
                     </div>
                 </div>
@@ -83,11 +95,9 @@
             <div class="nhsuk-grid-row">
                 <div class="nhsuk-grid-column-two-thirds">
                     <div class="nhsuk-form-group">
-                        <div class="nhsuk-form-group">
-                            <label class="nhsuk-label" for="verify-signature-value">Signature</label>
-                            <span class="nhsuk-hint" id="verify-signature-hint">This is the signature returned from the signing page</span>
-                            <input class="nhsuk-input" id="verify-signature-value" type="text" aria-describedby="verify-signature-hint" rv-value="verifySignature">
-                        </div>
+                        <label class="nhsuk-label" for="verify-signature-value">Signature</label>
+                        <span class="nhsuk-hint" id="verify-signature-hint">This is the signature returned from the signing page.</span>
+                        <textarea class="nhsuk-textarea" id="verify-signature-value" rows="3" aria-describedby="verify-signature-hint" rv-value="signature"></textarea>
                     </div>
                 </div>
             </div>
@@ -103,11 +113,12 @@
                             <legend class="nhsuk-fieldset__legend nhsuk-fieldset__legend--m">Select a prescription to verify</legend>
                         </div>
                         <span class="nhsuk-hint" id="example-hint">Select from a list of predefined example prescriptions.</span>
-                        <ol class="nhsuk-contents-list__list">
-                            <li class="nhsuk-contents-list__item" rv-each-example="examples">
-                                <a class="nhsuk-contents-list__link" rv-on-click="example.select">{example.description}</a>
-                            </li>
-                        </ol>
+                        <div class="nhsuk-radios">
+                            <div class="nhsuk-radios__item" rv-each-example="examples">
+                                <input class="nhsuk-radios__input" rv-id="example.id" type="radio" name="example" rv-value="example.id" rv-checked="selectedExampleId" rv-on-click="example.select">
+                                <label class="nhsuk-label nhsuk-radios__label" rv-for="example.id">{example.description}</label>
+                            </div>
+                        </div>
                     </fieldset>
                 </div>
             </div>
@@ -119,7 +130,7 @@
                     <dl class="nhsuk-summary-list">
                         <div class="nhsuk-summary-list__row" rv-each-name="signRequestSummary.patient.name">
                             <dt class="nhsuk-summary-list__key">Name</dt>
-                            <dd class="nhsuk-summary-list__value">{name | fullName}</dd>
+                            <dd class="nhsuk-summary-list__value">{name | fullName | joinWithSpaces}</dd>
                         </div>
                         <div class="nhsuk-summary-list__row">
                             <dt class="nhsuk-summary-list__key">NHS number</dt>
@@ -135,7 +146,11 @@
                         </div>
                         <div class="nhsuk-summary-list__row" rv-each-address="signRequestSummary.patient.address">
                             <dt class="nhsuk-summary-list__key">Address</dt>
-                            <dd class="nhsuk-summary-list__value">{address | fullAddress}</dd>
+                            <dd class="nhsuk-summary-list__value">
+                                <div rv-each-line="address | fullAddress">
+                                    {line}<br>
+                                </div>
+                            </dd>
                         </div>
                     </dl>
                 </div>
@@ -176,7 +191,7 @@
                     <dl class="nhsuk-summary-list">
                         <div class="nhsuk-summary-list__row" rv-each-name="signRequestSummary.practitioner.name">
                             <dt class="nhsuk-summary-list__key">Name</dt>
-                            <dd class="nhsuk-summary-list__value">{name | fullName}</dd>
+                            <dd class="nhsuk-summary-list__value">{name | fullName | joinWithSpaces}</dd>
                         </div>
                         <div class="nhsuk-summary-list__row">
                             <dt class="nhsuk-summary-list__key">Organization</dt>
@@ -184,7 +199,11 @@
                         </div>
                         <div class="nhsuk-summary-list__row" rv-each-address="signRequestSummary.prescribingOrganization.address">
                             <dt class="nhsuk-summary-list__key">Address</dt>
-                            <dd class="nhsuk-summary-list__value">{address | fullAddress}</dd>
+                            <dd class="nhsuk-summary-list__value">
+                                <div rv-each-line="address | fullAddress">
+                                    {line}<br>
+                                </div>
+                            </dd>
                         </div>
                         <div class="nhsuk-summary-list__row">
                             <dt class="nhsuk-summary-list__key">Trust / CCG</dt>
