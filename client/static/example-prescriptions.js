@@ -1,4 +1,13 @@
 let uuidNumber = 0
+const deterministicUuids = true
+
+function nextUuid() {
+    if (deterministicUuids) {
+        return deterministicNextUuid()
+    } else {
+        return uuid()
+    }
+}
 
 function deterministicNextUuid() {
     uuidNumber++
@@ -9,6 +18,19 @@ function deterministicNextUuid() {
         + uuidNumberStrPadded.substring(12, 16) + "-"
         + uuidNumberStrPadded.substring(16, 20) + "-"
         + uuidNumberStrPadded.substring(20, 32)
+}
+
+function uuid() {
+    let seed = Date.now();
+    if (window.performance && typeof window.performance.now === "function") {
+        seed += performance.now();
+    }
+
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = (seed + Math.random() * 16) % 16 | 0;
+        seed = Math.floor(seed / 16);
+        return (c === 'x' ? r : r & (0x3 | 0x8)).toString(16);
+    });
 }
 
 function CodeAndDesc(code, desc) {
@@ -36,17 +58,31 @@ function Telecom(system, value, use) {
 function Address(use, type, lines, city, postalCode) {
     this.use = use
     this.type = type
-    this.line = lines
-    this.city = city
-    this.postalCode = postalCode
+    setIfValuePresent(this, "line", lines, asArray)
+    setIfValuePresent(this, "city", city)
+    setIfValuePresent(this, "postalCode", postalCode)
 }
 
 function Name(use, family, given, prefix, suffix) {
     this.use = use
-    this.family = family
-    this.given = given
-    this.prefix = prefix
-    this.suffix = suffix
+    setIfValuePresent(this, "family", family)
+    setIfValuePresent(this, "given", given, asArray)
+    setIfValuePresent(this, "prefix", prefix, asArray)
+    setIfValuePresent(this, "suffix", suffix, asArray)
+}
+
+function asArray(arrayOrSingleValue) {
+    return [].concat(arrayOrSingleValue)
+}
+
+function setIfValuePresent(object, propertyName, propertyValue, transformFunction) {
+    if (typeof propertyValue === "undefined" || propertyValue === null) {
+        return
+    }
+    if (typeof transformFunction === "function") {
+        propertyValue = transformFunction(propertyValue)
+    }
+    object[propertyName] = propertyValue
 }
 
 function Quantity(value, unitCode) {
@@ -67,7 +103,7 @@ function Entry(resource) {
 
 function Organization(odsCode, type, name) {
     this.resourceType = "Organization"
-    this.id = deterministicNextUuid()
+    this.id = nextUuid()
     this.identifier = [
         new Identifier("https://fhir.nhs.uk/Id/ods-organization-code", odsCode)
     ]
@@ -101,7 +137,7 @@ Organization.prototype.setParent = function (organization) {
 
 function Encounter(organization) {
     this.resourceType = "Encounter"
-    this.id = deterministicNextUuid()
+    this.id = nextUuid()
     this.status = "finished"
     this.class = new Coding("http://terminology.hl7.org/CodeSystem/v3-ActCode", "AMB")
     this.serviceProvider = {
@@ -111,7 +147,7 @@ function Encounter(organization) {
 
 function Practitioner(sdsUserId, sdsJobRoleId, sdsRoleProfileId) {
     this.resourceType = "Practitioner"
-    this.id = deterministicNextUuid()
+    this.id = nextUuid()
     this.identifier = [
         new Identifier("https://fhir.nhs.uk/Id/sds-user-id", sdsUserId),
         new Identifier("https://fhir.nhs.uk/Id/sds-job-role-id", sdsJobRoleId),
@@ -134,7 +170,7 @@ Practitioner.prototype.addTelecom = function (telecom) {
 
 function PractitionerRole(practitioner, organization) {
     this.resourceType = "PractitionerRole"
-    this.id = deterministicNextUuid()
+    this.id = nextUuid()
     this.practitioner = {
         reference: "urn:uuid:" + practitioner.id
     }
@@ -145,7 +181,7 @@ function PractitionerRole(practitioner, organization) {
 
 function Patient(nhsNumber, gender, dateOfBirth) {
     this.resourceType = "Patient"
-    this.id = deterministicNextUuid()
+    this.id = nextUuid()
     this.identifier = [
         new Identifier("https://fhir.nhs.uk/Id/nhs-number", nhsNumber)
     ]
@@ -177,7 +213,7 @@ function DosageInstruction(textualDose) {
 
 function MedicationRequest(prescriptionIdentifier, prescriptionShortFormIdentifier, medicationCode, quantity, authoredOn) {
     this.resourceType = "MedicationRequest"
-    this.id = deterministicNextUuid()
+    this.id = nextUuid()
     this.groupIdentifier = [
         new Identifier("urn:uuid", prescriptionIdentifier),
         new Identifier("urn:oid:2.16.840.1.113883.2.1.3.2.4.18.8", prescriptionShortFormIdentifier)
@@ -227,7 +263,7 @@ MedicationRequest.prototype.setRecorder = function (practitionerRole) {
 
 function Bundle() {
     this.resourceType = "Bundle"
-    this.id = deterministicNextUuid()
+    this.id = nextUuid()
     this.type = "collection"
 }
 
@@ -264,24 +300,24 @@ const organization1a = new Organization(
     "Signing_Surg_2"
 )
 organization1a.addTelecom(new Telecom("phone", "tel:0161867785", "work"))
-organization1a.addAddress(new Address("work", "both", ["22 Dean Street"], "Manchester", "M1 4EF"))
+organization1a.addAddress(new Address("work", "both", "22 Dean Street", "Manchester", "M1 4EF"))
 organization1a.setParent(organization1b)
 
 const encounter1 = new Encounter(organization1a)
 
 const practitioner1 = new Practitioner("345747307432", "R0260", "125686540025")
-practitioner1.addName(new Name("official", "Becond", null, ["Dr"]))
+practitioner1.addName(new Name("official", "Becond", null, "Dr"))
 practitioner1.addTelecom(new Telecom("phone", "tel:0161867785", "work"))
 
 const practitionerRole1 = new PractitionerRole(practitioner1, organization1a)
 
 const patient1 = new Patient("9900028562", "female", "1981-11-11")
-patient1.addName(new Name("official", "Willow", ["Julie", "Lisa"], ["Miss"]))
-patient1.addAddress(new Address("home", "both", ["2 Abagail street,"], "Manchester", "M12 2WS"))
+patient1.addName(new Name("official", "Willow", ["Julie", "Lisa"], "Miss"))
+patient1.addAddress(new Address("home", "both", "2 Abagail street,", "Manchester", "M12 2WS"))
 patient1.setGeneralPractitioner(practitionerRole1)
 
-const prescriptionIdentifier1 = deterministicNextUuid()
-const shortFormPrescriptionIdentifier1 = ""
+const prescriptionIdentifier1 = nextUuid()
+const shortFormPrescriptionIdentifier1 = "972316-BEFDCA-835612"
 
 const medicationRequest1 = new MedicationRequest(
     prescriptionIdentifier1,
@@ -317,24 +353,24 @@ const organization2a = new Organization(
     "Signing_Surg_1"
 )
 organization2a.addTelecom(new Telecom("phone", "tel:01132754568", "work"))
-organization2a.addAddress(new Address("work", "both", ["1 Princes Street"], "Leeds", "LS1 5AH"))
+organization2a.addAddress(new Address("work", "both", "1 Princes Street", "Leeds", "LS1 5AH"))
 organization2a.setParent(organization2b)
 
 const encounter2 = new Encounter(organization2a)
 
 const practitioner2 = new Practitioner("125686540025", "R0260", "934565838956")
-practitioner2.addName(new Name("official", "Hurst", null, ["Dr"]))
+practitioner2.addName(new Name("official", "Hurst", null, "Dr"))
 practitioner2.addTelecom(new Telecom("phone", "tel:011327534256", "work"))
 
 const practitionerRole2 = new PractitionerRole(practitioner2, organization2a)
 
 const patient2 = new Patient("9900008464", "male", "1973-04-21")
-patient2.addName(new Name("official", "Anderson", ["Michael", "Jack"], ["Mr"]))
-patient2.addAddress(new Address("home", "both", ["1 Otley Road,"], "Leeds", "LS6 5RU"))
+patient2.addName(new Name("official", "Anderson", ["Michael", "Jack"], "Mr"))
+patient2.addAddress(new Address("home", "both", "1 Otley Road,", "Leeds", "LS6 5RU"))
 patient2.setGeneralPractitioner(practitionerRole2)
 
-const prescriptionIdentifier2 = deterministicNextUuid()
-const shortFormPrescriptionIdentifier2 = ""
+const prescriptionIdentifier2 = nextUuid()
+const shortFormPrescriptionIdentifier2 = "648266-EDFABA-045634"
 
 const medicationRequest2a = new MedicationRequest(
     prescriptionIdentifier2,
