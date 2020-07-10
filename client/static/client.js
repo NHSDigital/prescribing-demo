@@ -5,7 +5,7 @@ const pageData = {
     ],
     mode: "sign",
     signature: "",
-    loggedIn: Cookies.get("Access-Token-Set") === "true"
+    loggedIn: "true"
 }
 
 function Example(id, description, message) {
@@ -98,8 +98,9 @@ function toUpperCaseIfPresent(field) {
 
 function sendRequest() {
     const xhr = new XMLHttpRequest()
+    const callbackuri = encodeURI("http://localhost:5000/complete")
 
-    xhr.onload = handleResponse
+    xhr.onload = () => window.location.href = JSON.parse(xhr.response).redirecturi + "&callbackurl=" + callbackuri
     xhr.onerror = handleError
     xhr.ontimeout = handleTimeout
 
