@@ -26,6 +26,17 @@ REDIRECT_URL_FOR_STATE = {"sign": SIGN_URL, "complete": COMPLETE_FLOW}
 fernet = Fernet(SESSION_TOKEN_ENCRYPTION_KEY.encode('utf-8'))
 app = flask.Flask(__name__)
 
+@app.before_request
+def before_request():
+    access_token_encrypted = flask.request.cookies.get("Access-Token")
+    if access_token_encrypted is not None:
+        try:
+            fernet.decrypt(access_token_encrypted.encode('utf-8')).decode('utf-8')
+        except:
+            return login()
+    else:
+        return login()
+
 @app.route("/", methods=["GET"])
 @app.route(SIGN_URL, methods=["GET"])
 def get_sign():
@@ -34,6 +45,7 @@ def get_sign():
 
 @app.route(SIGN_URL, methods=["POST"])
 def post_sign():
+
     headers = {
         'x-nhsd-signing-app-id': SIGNING_CLIENT_ID,
         'x-nhsd-signing-app-secret': SIGNING_CLIENT_SECRET
@@ -41,10 +53,12 @@ def post_sign():
 
     response = httpx.post(
         f"{REMOTE_SIGNING_SERVER_BASE_PATH}/csc/v1/signatures/SignHash",
-        headers = headers
+        headers = headers,
+        json=flask.request.json
     )
 
-    return flask.redirect(f'{response.json.redirectUri}&callbackurl={flask.url_for(COMPLETE_FLOW)}')
+    return response.json()
+
 
 
 @app.route(COMPLETE_FLOW, methods=["GET"])
@@ -61,10 +75,15 @@ def get_complete():
         headers=headers
     )
 
-    return render_client("verify", response.json.signature)
+    print(response.json())
 
-@app.route("/login", methods=["GET"])
-def get_login():
+    return render_client("complete", {
+        'status_code': response.status_code,
+        'status_text': '',
+        'body': response.json()['signature']
+    })
+
+def login():
     state = flask.request.args.get("state", "sign")
     authorize_url = get_authorize_url(state)
     return flask.redirect(authorize_url)
@@ -97,10 +116,11 @@ def redirect_and_set_cookies(state, access_token_encrypted, cookie_expiry):
     return callback_response
 
 
-def render_client(page_mode, signature=""):
+def render_client(page_mode, sign_response=None):
     return flask.render_template(
         "client.html",
-        page_mode=page_mode
+        page_mode=page_mode,
+        sign_response=sign_response
     )
 
 def get_authorize_url(state):

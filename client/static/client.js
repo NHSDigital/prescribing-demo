@@ -14,7 +14,7 @@ function Example(id, description, message) {
     this.message = message
     this.select = function () {
         pageData.selectedExampleId = id
-        resetPageData()
+        resetPageData(pageData.mode)
     }
 }
 
@@ -68,6 +68,8 @@ rivets.formatters.isVerify = function (mode) {
     return mode === "verify"
 }
 
+rivets.formatters.isComplete = (mode) => mode === 'complete'
+
 rivets.formatters.joinWithSpaces = function(strings) {
     return strings.join(" ")
 }
@@ -100,7 +102,7 @@ function sendRequest() {
     const xhr = new XMLHttpRequest()
     const callbackuri = encodeURI("http://localhost:5000/complete")
 
-    xhr.onload = () => window.location.href = JSON.parse(xhr.response).redirecturi + "&callbackurl=" + callbackuri
+    xhr.onload = () => window.location.href = JSON.parse(xhr.response).redirectUri + "&callbackurl=" + callbackuri
     xhr.onerror = handleError
     xhr.ontimeout = handleTimeout
 
@@ -185,10 +187,14 @@ function onLoad() {
     bind()
 }
 
-function resetPageData() {
+function resetPageData(pageMode = '') {
+    pageData.mode = pageMode
     pageData.signRequestSummary = getSummary(getPayload())
-    pageData.signResponse = null
     pageData.errorList = null
+}
+
+function resetSignResponse() {
+    pageData.signResponse = null
 }
 
 function bind() {

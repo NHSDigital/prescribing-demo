@@ -14,6 +14,14 @@
         pageData.signature="{{signature}}";
     </script>
     {% endif %}
+    {% if sign_response is not none %}
+    <script type="text/javascript">
+        pageData.signResponse = {}
+        pageData.signResponse.statusCode = "{{sign_response.status_code}}"
+        pageData.signResponse.statusText = "{{sign_response.status_text}}"
+        pageData.signResponse.body = "{{sign_response.body}}"
+    </script>
+    {% endif %}
 </head>
 <body onload="onLoad()">
 <header class="nhsuk-header nhsuk-header--transactional" role="banner">
@@ -46,14 +54,14 @@
                                 </svg>
                             </a>
                         </li>
-                        <li class="nhsuk-pagination-item--next" rv-show="mode | isSign">
+                        <!-- <li class="nhsuk-pagination-item--next" rv-show="mode | isSign">
                             <a class="nhsuk-pagination__link nhsuk-pagination__link--next" href="/verify">
                                 <span class="nhsuk-pagination__title">Verify</span>
                                 <svg class="nhsuk-icon nhsuk-icon__arrow-right" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
                                     <path d="M19.6 11.66l-2.73-3A.51.51 0 0 0 16 9v2H5a1 1 0 0 0 0 2h11v2a.5.5 0 0 0 .32.46.39.39 0 0 0 .18 0 .52.52 0 0 0 .37-.16l2.73-3a.5.5 0 0 0 0-.64z"></path>
                                 </svg>
                             </a>
-                        </li>
+                        </li> -->
                     </ul>
                 </nav>
             </div>
@@ -67,6 +75,9 @@
                         </div>
                         <div rv-show="mode | isVerify">
                             <h1 class="nhsuk-fieldset__heading">Verify signature</h1>
+                        </div>
+                        <div rv-show="mode | isComplete">
+                            <h1 class="nhsuk-fieldset__heading">Signing Complete</h1>
                         </div>
                     </legend>
                 </fieldset>
@@ -220,7 +231,7 @@
             <div class="nhsuk-grid-row">
                 <div class="nhsuk-grid-column-two-thirds">
                     <button class="nhsuk-button" type="submit" onclick="sendRequest()">Sign prescription</button>
-                    <button class="nhsuk-button nhsuk-button--secondary" type="submit" onclick="resetPageData()">Reset</button>
+                    <button class="nhsuk-button nhsuk-button--secondary" type="submit" onclick="resetPageData('sign'); resetSignResponse();">Reset</button>
                 </div>
             </div>
         </div>
@@ -228,7 +239,14 @@
             <div class="nhsuk-grid-row">
                 <div class="nhsuk-grid-column-two-thirds">
                     <button class="nhsuk-button" type="submit" onclick="sendRequest()">Verify signature</button>
-                    <button class="nhsuk-button nhsuk-button--secondary" type="submit" onclick="resetPageData()">Reset</button>
+                    <button class="nhsuk-button nhsuk-button--secondary" type="submit" onclick="resetPageData('verify'); resetSignResponse();">Reset</button>
+                </div>
+            </div>
+        </div>
+        <div rv-show="mode | isComplete">
+            <div class="nhsuk-grid-row">
+                <div class="nhsuk-grid-column-two-thirds">
+                    <button class="nhsuk-button nhsuk-button--secondary" type="submit" onclick="resetPageData('sign'); resetSignResponse();">Reset</button>
                 </div>
             </div>
         </div>
@@ -240,9 +258,6 @@
                     </h2>
                     <div class="nhsuk-error-summary__body">
                         <p>An error occurred while sending the request. See console for details.</p>
-<!--                        <ul class="nhsuk-list nhsuk-error-summary__list">-->
-<!--                            <li rv-each-error="errorList"><a href="#">{error.message}</a></li>-->
-<!--                        </ul>-->
                     </div>
                 </div>
             </div>
