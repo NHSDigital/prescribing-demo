@@ -5,7 +5,7 @@ const pageData = {
     ],
     mode: "sign",
     signature: "",
-    loggedIn: "true"
+    loggedIn: Cookies.get("Access-Token-Set") === "true"
 }
 
 function Example(id, description, message) {

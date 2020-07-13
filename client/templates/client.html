@@ -9,7 +9,10 @@
     <script type="application/javascript" src="../static/example-prescriptions.js"></script>
     <script type="application/javascript" src="../static/client.js"></script>
     {% if page_mode is not none %}
-    <script type="application/javascript">pageData.mode="{{page_mode}}"</script>
+    <script type="application/javascript">
+        pageData.mode="{{page_mode}}";
+        pageData.signature="{{signature}}";
+    </script>
     {% endif %}
 </head>
 <body onload="onLoad()">
