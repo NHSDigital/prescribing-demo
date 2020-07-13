@@ -15,11 +15,13 @@ CLIENT_ID = os.environ["CLIENT_ID"]
 CLIENT_SECRET = os.environ["CLIENT_SECRET"]
 SIGNING_CLIENT_ID = os.environ["SIGNING_CLIENT_ID"]
 SIGNING_CLIENT_SECRET = os.environ["SIGNING_CLIENT_SECRET"]
+SERVER_NAME = os.environ["SERVER_NAME"]
 APP_NAME = os.environ["APP_NAME"]
 SESSION_TOKEN_ENCRYPTION_KEY = os.environ["SESSION_TOKEN_ENCRYPTION_KEY"]
 DEV_MODE = os.environ.get("DEV_MODE", False)
 
 SIGN_URL = "/sign"
+VERIFY_URL = "/verify"
 COMPLETE_FLOW = "/complete"
 REDIRECT_URL_FOR_STATE = {"sign": SIGN_URL, "complete": COMPLETE_FLOW}
 
@@ -57,8 +59,13 @@ def post_sign():
         json=flask.request.json
     )
 
-    return response.json()
+    response_body = response.json()
 
+    return {
+        'token': response_body.get('token'),
+        'redirectUri': response_body.get('redirectUri'),
+        'callbackUri': f'{SERVER_NAME}/complete'
+    }
 
 
 @app.route(COMPLETE_FLOW, methods=["GET"])
@@ -75,13 +82,26 @@ def get_complete():
         headers=headers
     )
 
-    print(response.json())
-
-    return render_client("complete", {
+    return render_client('sign', {
         'status_code': response.status_code,
         'status_text': '',
         'body': response.json()['signature']
     })
+
+
+@app.route(VERIFY_URL, methods=["GET"])
+def get_verify():
+    return render_client("verify")
+
+
+@app.route(VERIFY_URL, methods=["POST"])
+def post_verify():
+    # Need to re-integrate with the verify endpoint
+
+    return {
+        'valid': False
+    }
+
 
 def login():
     state = flask.request.args.get("state", "sign")
