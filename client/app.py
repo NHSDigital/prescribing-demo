@@ -73,8 +73,8 @@ def post_sign():
     response_body = response.json()
 
     return {
-        'token': response_body.get('token'),
-        'redirectUri': response_body.get('redirectUri'),
+        'token': response_body['token'],
+        'redirectUri': response_body['redirectUri'],
         'callbackUri': f'{SERVER_NAME}/complete'
     }
 
