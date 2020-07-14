@@ -113,35 +113,3 @@ resource "aws_lambda_permission" "allow_apig" {
     aws_api_gateway_resource.proxy,
   ]
 }
-
-resource "aws_s3_bucket" "client_bucket" {
-  bucket = "${var.project-name}-client-${var.environment-name}"
-  acl = "public-read"
-  website {
-    index_document = "client.html"
-  }
-}
-
-data "aws_iam_policy_document" "bucket_policy_document" {
-  statement {
-    sid = "clientbucketpolicy"
-
-    principals {
-      type        = "*"
-      identifiers = ["*"]
-    }
-
-    actions = [
-      "s3:GetObject"
-    ]
-
-    resources = [
-      aws_s3_bucket.client_bucket.arn
-    ]
-  }
-}
-
-resource "aws_s3_bucket_policy" "bucket_policy" {
-  bucket = aws_s3_bucket.client_bucket.id
-  policy = data.aws_s3_bucket_policy.bucket_policy_document.json
-}
