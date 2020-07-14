@@ -72,6 +72,8 @@ def post_sign():
 
     response_body = response.json()
 
+    print(response_body)
+
     return {
         'token': response_body['token'],
         'redirectUri': response_body['redirectUri'],
