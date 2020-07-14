@@ -121,3 +121,27 @@ resource "aws_s3_bucket" "client_bucket" {
     index_document = "client.html"
   }
 }
+
+data "aws_iam_policy_document" "bucket_policy_document" {
+  statement {
+    sid = "clientbucketpolicy"
+
+    principals {
+      type        = "*"
+      identifiers = ["*"]
+    }
+
+    actions = [
+      "s3:GetObject"
+    ]
+
+    resources = [
+      aws_s3_bucket.client_bucket.arn
+    ]
+  }
+}
+
+resource "aws_s3_bucket_policy" "bucket_policy" {
+  bucket = aws_s3_bucket.client_bucket.id
+  policy = data.aws_s3_bucket_policy.bucket_policy_document.json
+}
