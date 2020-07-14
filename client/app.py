@@ -7,22 +7,37 @@ import flask
 import httpx
 from cryptography.fernet import Fernet
 
+
 OAUTH_SERVER_BASE_PATH = os.environ["OAUTH_SERVER_BASE_PATH"]
 REMOTE_SIGNING_SERVER_BASE_PATH = os.environ["REMOTE_SIGNING_SERVER_BASE_PATH"]
 REDIRECT_URI = os.environ["REDIRECT_URI"]
 CLIENT_ID = os.environ["CLIENT_ID"]
 CLIENT_SECRET = os.environ["CLIENT_SECRET"]
+SIGNING_CLIENT_ID = os.environ["SIGNING_CLIENT_ID"]
+SIGNING_CLIENT_SECRET = os.environ["SIGNING_CLIENT_SECRET"]
+SERVER_NAME = os.environ["SERVER_NAME"]
 APP_NAME = os.environ["APP_NAME"]
 SESSION_TOKEN_ENCRYPTION_KEY = os.environ["SESSION_TOKEN_ENCRYPTION_KEY"]
 DEV_MODE = os.environ.get("DEV_MODE", False)
 
 SIGN_URL = "/sign"
 VERIFY_URL = "/verify"
-REDIRECT_URL_FOR_STATE = {"sign": SIGN_URL, "verify": VERIFY_URL}
+COMPLETE_FLOW = "/complete"
+REDIRECT_URL_FOR_STATE = {"sign": SIGN_URL, "complete": COMPLETE_FLOW}
 
 fernet = Fernet(SESSION_TOKEN_ENCRYPTION_KEY.encode('utf-8'))
 app = flask.Flask(__name__)
 
+@app.before_request
+def before_request():
+    access_token_encrypted = flask.request.cookies.get("Access-Token")
+    if access_token_encrypted is not None:
+        try:
+            fernet.decrypt(access_token_encrypted.encode('utf-8')).decode('utf-8')
+        except:
+            return login()
+    else:
+        return login()
 
 @app.route("/", methods=["GET"])
 @app.route(SIGN_URL, methods=["GET"])
@@ -32,7 +47,46 @@ def get_sign():
 
 @app.route(SIGN_URL, methods=["POST"])
 def post_sign():
-    return forward_request("sign")
+
+    headers = {
+        'x-nhsd-signing-app-id': SIGNING_CLIENT_ID,
+        'x-nhsd-signing-app-secret': SIGNING_CLIENT_SECRET
+    }
+
+    response = httpx.post(
+        f"{REMOTE_SIGNING_SERVER_BASE_PATH}/csc/v1/signatures/SignHash",
+        headers = headers,
+        json=flask.request.json
+    )
+
+    response_body = response.json()
+
+    return {
+        'token': response_body.get('token'),
+        'redirectUri': response_body.get('redirectUri'),
+        'callbackUri': f'{SERVER_NAME}/complete'
+    }
+
+
+@app.route(COMPLETE_FLOW, methods=["GET"])
+def get_complete():
+    token = flask.request.args.get('token', '')
+
+    headers = {
+        'x-nhsd-signing-app-id': SIGNING_CLIENT_ID,
+        'x-nhsd-signing-app-secret': SIGNING_CLIENT_SECRET
+    }
+
+    response = httpx.get(
+        f"{REMOTE_SIGNING_SERVER_BASE_PATH}/csc/v1/Signature?token={token}",
+        headers=headers
+    )
+
+    return render_client('sign', {
+        'status_code': response.status_code,
+        'status_text': '',
+        'body': response.json()['signature']
+    })
 
 
 @app.route(VERIFY_URL, methods=["GET"])
@@ -42,11 +96,14 @@ def get_verify():
 
 @app.route(VERIFY_URL, methods=["POST"])
 def post_verify():
-    return forward_request("verify")
+    # Need to re-integrate with the verify endpoint
+
+    return {
+        'valid': False
+    }
 
 
-@app.route("/login", methods=["GET"])
-def get_login():
+def login():
     state = flask.request.args.get("state", "sign")
     authorize_url = get_authorize_url(state)
     return flask.redirect(authorize_url)
@@ -79,30 +136,12 @@ def redirect_and_set_cookies(state, access_token_encrypted, cookie_expiry):
     return callback_response
 
 
-def render_client(page_mode):
+def render_client(page_mode, sign_response=None):
     return flask.render_template(
         "client.html",
-        page_mode=page_mode
+        page_mode=page_mode,
+        sign_response=sign_response
     )
-
-
-def forward_request(path):
-    headers = {
-        'Nhsd-Session-Urid': "1234"
-    }
-
-    access_token_encrypted = flask.request.cookies.get("Access-Token")
-    if access_token_encrypted is not None:
-        access_token = fernet.decrypt(access_token_encrypted.encode('utf-8')).decode('utf-8')
-        headers['Authorization'] = f"Bearer {access_token}"
-
-    response = httpx.post(
-        f"{REMOTE_SIGNING_SERVER_BASE_PATH}{path}",
-        json=flask.request.json,
-        headers=headers
-    )
-    return response.content, response.status_code
-
 
 def get_authorize_url(state):
     query_params = {
@@ -126,7 +165,6 @@ def exchange_code_for_token(code):
         }
     )
     return token_response.json()
-
 
 if __name__ == "__main__":
     app.run(port=5000, debug=DEV_MODE)

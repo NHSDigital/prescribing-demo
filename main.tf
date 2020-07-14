@@ -113,11 +113,3 @@ resource "aws_lambda_permission" "allow_apig" {
     aws_api_gateway_resource.proxy,
   ]
 }
-
-resource "aws_s3_bucket" "client_bucket" {
-  bucket = "${var.project-name}-client-${var.environment-name}"
-  acl = "public-read"
-  website {
-    index_document = "client.html"
-  }
-}

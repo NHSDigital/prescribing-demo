@@ -14,7 +14,7 @@ function Example(id, description, message) {
     this.message = message
     this.select = function () {
         pageData.selectedExampleId = id
-        resetPageData()
+        resetPageData(pageData.mode)
     }
 }
 
@@ -60,13 +60,9 @@ rivets.formatters.fullAddress = function(address) {
     ])
 }
 
-rivets.formatters.isSign = function (mode) {
-    return mode === "sign"
-}
+rivets.formatters.isSign = (mode) => mode === 'sign'
 
-rivets.formatters.isVerify = function (mode) {
-    return mode === "verify"
-}
+rivets.formatters.isVerify = (mode) => mode === 'verify'
 
 rivets.formatters.joinWithSpaces = function(strings) {
     return strings.join(" ")
@@ -95,29 +91,46 @@ function toUpperCaseIfPresent(field) {
         return field
     }
 }
+ 
+async function sendSignRequest() {
+    try {
+        const payload = JSON.stringify(getPayload())
 
-function sendRequest() {
-    const xhr = new XMLHttpRequest()
+        const response = await fetch("/sign", {
+            method: "POST",
+            body: JSON.stringify({ 'payload': btoa(payload) }),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
 
-    xhr.onload = handleResponse
-    xhr.onerror = handleError
-    xhr.ontimeout = handleTimeout
+        const payloadResponse = await response.json()
+        window.location.href = `${payloadResponse.redirectUri}&callbackurl=${payloadResponse.callbackUri}`
+    } catch(e) {
+        console.error(e)
+        addError('Communication error')
+    }
+}
 
-    xhr.open("POST", "/" + pageData.mode)
-    xhr.setRequestHeader("Content-Type", "application/json")
+async function sendVerifyRequest() {
+    try {
+        const payload = JSON.stringify(getPayload())
 
-    const payload = JSON.stringify(getPayload())
-    if (pageData.mode === "sign") {
-        const signRequest = {
-            "payload": btoa(payload)
-        }
-        xhr.send(JSON.stringify(signRequest))
-    } else {
-        const verifyRequest = {
-            "payload": btoa(payload),
-            "signature": pageData.signature
-        }
-        xhr.send(JSON.stringify(verifyRequest))
+        const response = await fetch("/verify", {
+            method: "POST",
+            body: JSON.stringify({ 'payload': btoa(payload), 'signature': pageData.signature }),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+
+        pageData.signResponse = {}
+        pageData.signResponse.statusCode = response.status
+        pageData.signResponse.statusCode = response.statusText
+        pageData.signResponse.body = JSON.stringify(await response.json())
+    } catch(e) {
+        console.log(e)
+        addError('Communication error')
     }
 }
 
@@ -127,14 +140,6 @@ function handleResponse() {
         statusText: this.statusText,
         body: this.responseText
     }
-}
-
-function handleError() {
-    addError("Network error")
-}
-
-function handleTimeout() {
-    addError("Network timeout")
 }
 
 window.onerror = function(msg, url, line, col, error) {
@@ -184,10 +189,14 @@ function onLoad() {
     bind()
 }
 
-function resetPageData() {
+function resetPageData(pageMode = '') {
+    pageData.mode = pageMode
     pageData.signRequestSummary = getSummary(getPayload())
-    pageData.signResponse = null
     pageData.errorList = null
+}
+
+function resetSignResponse() {
+    pageData.signResponse = null
 }
 
 function bind() {

@@ -9,7 +9,18 @@
     <script type="application/javascript" src="../static/example-prescriptions.js"></script>
     <script type="application/javascript" src="../static/client.js"></script>
     {% if page_mode is not none %}
-    <script type="application/javascript">pageData.mode="{{page_mode}}"</script>
+    <script type="application/javascript">
+        pageData.mode="{{page_mode}}";
+        pageData.signature="{{signature}}";
+    </script>
+    {% endif %}
+    {% if sign_response is not none %}
+    <script type="text/javascript">
+        pageData.signResponse = {}
+        pageData.signResponse.statusCode = "{{sign_response.status_code}}"
+        pageData.signResponse.statusText = "{{sign_response.status_text}}"
+        pageData.signResponse.body = "{{sign_response.body}}"
+    </script>
     {% endif %}
 </head>
 <body onload="onLoad()">
@@ -216,16 +227,16 @@
         <div rv-show="mode | isSign">
             <div class="nhsuk-grid-row">
                 <div class="nhsuk-grid-column-two-thirds">
-                    <button class="nhsuk-button" type="submit" onclick="sendRequest()">Sign prescription</button>
-                    <button class="nhsuk-button nhsuk-button--secondary" type="submit" onclick="resetPageData()">Reset</button>
+                    <button class="nhsuk-button" type="submit" onclick="sendSignRequest()">Sign prescription</button>
+                    <button class="nhsuk-button nhsuk-button--secondary" type="submit" onclick="resetPageData('sign'); resetSignResponse();">Reset</button>
                 </div>
             </div>
         </div>
         <div rv-show="mode | isVerify">
             <div class="nhsuk-grid-row">
                 <div class="nhsuk-grid-column-two-thirds">
-                    <button class="nhsuk-button" type="submit" onclick="sendRequest()">Verify signature</button>
-                    <button class="nhsuk-button nhsuk-button--secondary" type="submit" onclick="resetPageData()">Reset</button>
+                    <button class="nhsuk-button" type="submit" onclick="sendVerifyRequest()">Verify signature</button>
+                    <button class="nhsuk-button nhsuk-button--secondary" type="submit" onclick="resetPageData('verify'); resetSignResponse();">Reset</button>
                 </div>
             </div>
         </div>
@@ -237,9 +248,6 @@
                     </h2>
                     <div class="nhsuk-error-summary__body">
                         <p>An error occurred while sending the request. See console for details.</p>
-<!--                        <ul class="nhsuk-list nhsuk-error-summary__list">-->
-<!--                            <li rv-each-error="errorList"><a href="#">{error.message}</a></li>-->
-<!--                        </ul>-->
                     </div>
                 </div>
             </div>
