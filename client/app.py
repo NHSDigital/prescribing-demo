@@ -28,16 +28,27 @@ REDIRECT_URL_FOR_STATE = {"sign": SIGN_URL, "complete": COMPLETE_FLOW}
 fernet = Fernet(SESSION_TOKEN_ENCRYPTION_KEY.encode('utf-8'))
 app = flask.Flask(__name__)
 
+def exclude_from_auth(func):
+    func._exclude_from_auth = False
+    return func
+
 @app.before_request
-def before_request():
-    access_token_encrypted = flask.request.cookies.get("Access-Token")
-    if access_token_encrypted is not None:
-        try:
-            fernet.decrypt(access_token_encrypted.encode('utf-8')).decode('utf-8')
-        except:
+def auth_check():
+    skip_auth = False
+
+    if flask.request.endpoint in app.view_functions:
+        view_func = app.view_functions[flask.request.endpoint]
+        skip_auth = hasattr(view_func, '_exclude_from_auth')
+
+    if not skip_auth:
+        access_token_encrypted = flask.request.cookies.get("Access-Token")
+        if access_token_encrypted is not None:
+            try:
+                fernet.decrypt(access_token_encrypted.encode('utf-8')).decode('utf-8')
+            except:
+                return login()
+        else:
             return login()
-    else:
-        return login()
 
 @app.route("/", methods=["GET"])
 @app.route(SIGN_URL, methods=["GET"])
@@ -116,6 +127,7 @@ def get_logout():
 
 
 @app.route("/callback", methods=["GET"])
+@exclude_from_auth
 def get_callback():
     state = flask.request.args.get("state", "sign")
     code = flask.request.args.get("code")
@@ -165,6 +177,7 @@ def exchange_code_for_token(code):
         }
     )
     return token_response.json()
+
 
 if __name__ == "__main__":
     app.run(port=5000, debug=DEV_MODE)
