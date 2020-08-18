@@ -194,7 +194,7 @@ MedicationRequest.prototype.setRequester = function (practitioner) {
 function Bundle() {
   this.resourceType = "Bundle"
   this.id = deterministicNextUuid()
-  this.type = "collection"
+  this.type = "message"
 }
 Bundle.prototype.addEntry = function (entry) {
   if (!this.entry) {
@@ -216,6 +216,13 @@ const quantityCodeDose = new CodeAndDesc("4034511000001102", "dose")
 /**
  * Examples
  */
+
+let getBundleExample = () => {
+  var xmlHttp = new XMLHttpRequest();
+  xmlHttp.open( "GET", "https://raw.githubusercontent.com/NHSDigital/electronic-prescription-service-api/master/models/examples/example-1-repeat-dispensing/SendRequest-FhirMessageSigned.json", false ); // false for synchronous request
+  xmlHttp.send( null );
+  return JSON.parse(xmlHttp.responseText);
+}
 
 const organization1b = new Organization(
     "1WQ",
@@ -252,13 +259,14 @@ medicationRequest1.setPatient(patient1)
 medicationRequest1.setEncounter(encounter1)
 medicationRequest1.setRequester(practitioner1)
 
-const EXAMPLE_PRESCRIPTION_SINGLE_LINE_ITEM = new Bundle()
-EXAMPLE_PRESCRIPTION_SINGLE_LINE_ITEM.addEntry(new Entry(medicationRequest1))
-EXAMPLE_PRESCRIPTION_SINGLE_LINE_ITEM.addEntry(new Entry(patient1))
-EXAMPLE_PRESCRIPTION_SINGLE_LINE_ITEM.addEntry(new Entry(practitioner1))
-EXAMPLE_PRESCRIPTION_SINGLE_LINE_ITEM.addEntry(new Entry(encounter1))
-EXAMPLE_PRESCRIPTION_SINGLE_LINE_ITEM.addEntry(new Entry(organization1a))
-EXAMPLE_PRESCRIPTION_SINGLE_LINE_ITEM.addEntry(new Entry(organization1b))
+let EXAMPLE_PRESCRIPTION_SINGLE_LINE_ITEM = getBundleExample()
+// todo:remove these including the object setup above?
+// EXAMPLE_PRESCRIPTION_SINGLE_LINE_ITEM.addEntry(new Entry(medicationRequest1))
+// EXAMPLE_PRESCRIPTION_SINGLE_LINE_ITEM.addEntry(new Entry(patient1))
+// EXAMPLE_PRESCRIPTION_SINGLE_LINE_ITEM.addEntry(new Entry(practitioner1))
+// EXAMPLE_PRESCRIPTION_SINGLE_LINE_ITEM.addEntry(new Entry(encounter1))
+// EXAMPLE_PRESCRIPTION_SINGLE_LINE_ITEM.addEntry(new Entry(organization1a))
+// EXAMPLE_PRESCRIPTION_SINGLE_LINE_ITEM.addEntry(new Entry(organization1b))
 
 const organization2b = new Organization(
     "4CD",

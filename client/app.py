@@ -3,12 +3,16 @@ import datetime
 import os
 from urllib.parse import urlencode
 
+import json
+
 import flask
 import httpx
 from cryptography.fernet import Fernet
 
 
 OAUTH_SERVER_BASE_PATH = os.environ["OAUTH_SERVER_BASE_PATH"]
+ELECTRONIC_PRESCRIPTION_API_BASE_PATH = os.environ["ELECTRONIC_PRESCRIPTION_API_BASE_PATH"]
+ELECTRONIC_PRESCRIPTION_API_PREPARE_PATH = os.environ["ELECTRONIC_PRESCRIPTION_API_PREPARE_PATH"]
 REMOTE_SIGNING_SERVER_BASE_PATH = os.environ["REMOTE_SIGNING_SERVER_BASE_PATH"]
 REDIRECT_URI = os.environ["REDIRECT_URI"]
 CLIENT_ID = os.environ["CLIENT_ID"]
@@ -32,7 +36,8 @@ def exclude_from_auth(func):
     func._exclude_from_auth = False
     return func
 
-@app.before_request
+# todo: remove this supression
+#@app.before_request
 def auth_check():
     skip_auth = False
 
@@ -58,25 +63,40 @@ def get_sign():
 
 @app.route(SIGN_URL, methods=["POST"])
 def post_sign():
+    prescription = flask.request.json
+
+    prepare_prescription_response = httpx.post(
+        f"{ELECTRONIC_PRESCRIPTION_API_BASE_PATH}/{ELECTRONIC_PRESCRIPTION_API_PREPARE_PATH}",
+        json=prescription
+    )
+
+    prepare_prescription_response_body = prepare_prescription_response.json()
+
+    message_digest = prepare_prescription_response_body['parameter'][0]['valueString']
 
     headers = {
         'x-nhsd-signing-app-id': SIGNING_CLIENT_ID,
         'x-nhsd-signing-app-secret': SIGNING_CLIENT_SECRET
     }
 
-    response = httpx.post(
+    payload = json.dumps({ 'payload': message_digest })
+
+    print(payload)
+
+    sign_response = httpx.post(
         f"{REMOTE_SIGNING_SERVER_BASE_PATH}/csc/v1/signatures/SignHash",
         headers = headers,
-        json=flask.request.json
+        json = payload,
+        verify = False
     )
 
-    response_body = response.json()
+    print(sign_response)
 
-    print(response_body)
+    sign_response_body = sign_response.json()
 
     return {
-        'token': response_body['token'],
-        'redirectUri': response_body['redirectUri'],
+        'token': sign_response_body['token'],
+        'redirectUri': sign_response_body['redirectUri'],
         'callbackUri': f'{SERVER_NAME}/complete'
     }
 
