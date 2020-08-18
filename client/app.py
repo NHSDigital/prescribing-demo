@@ -36,6 +36,7 @@ def exclude_from_auth(func):
     func._exclude_from_auth = False
     return func
 
+@app.before_request
 def auth_check():
     skip_auth = False
 
