@@ -78,7 +78,8 @@ def post_sign():
         'x-nhsd-signing-app-secret': SIGNING_CLIENT_SECRET
     }
 
-    payload = json.dumps({ 'payload': message_digest })
+    payloadString = json.dumps({ 'payload': message_digest })
+    payload = json.loads(payloadString)
 
     print(payload)
 
