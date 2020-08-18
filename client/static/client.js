@@ -98,7 +98,7 @@ async function sendSignRequest() {
 
         const response = await fetch("/sign", {
             method: "POST",
-            body: JSON.stringify({ 'payload': btoa(payload) }),
+            body: payload,
             headers: {
                 'Content-Type': 'application/json'
             }
@@ -107,7 +107,7 @@ async function sendSignRequest() {
         const payloadResponse = await response.json()
         window.location.href = `${payloadResponse.redirectUri}&callbackurl=${payloadResponse.callbackUri}`
     } catch(e) {
-        console.error(e)
+        console.log(e)
         addError('Communication error')
     }
 }
@@ -161,16 +161,17 @@ function getSummary(payload) {
     const patient = getResourcesOfType(payload, "Patient")[0]
     const practitioner = getResourcesOfType(payload, "Practitioner")[0]
     const encounter = getResourcesOfType(payload, "Encounter")[0]
+    // todo: remove these?
     const organizations = getResourcesOfType(payload, "Organization")
-    const prescribingOrganization = organizations.filter(organization => "urn:uuid:" + organization.id === encounter.serviceProvider.reference)[0]
-    const parentOrganization = organizations.filter(organization => "urn:uuid:" + organization.id === prescribingOrganization.partOf.reference)[0]
+    //const prescribingOrganization = organizations.filter(organization => "urn:uuid:" + organization.id === encounter.serviceProvider.reference)[0]
+    //const parentOrganization = organizations.filter(organization => "urn:uuid:" + organization.id === prescribingOrganization.partOf.reference)[0]
     const medicationRequests = getResourcesOfType(payload, "MedicationRequest")
     return {
         patient: patient,
         practitioner: practitioner,
         encounter: encounter,
-        prescribingOrganization: prescribingOrganization,
-        parentOrganization: parentOrganization,
+        prescribingOrganization: organization1b,
+        parentOrganization: organization1a,
         medicationRequests: medicationRequests
     }
 }
