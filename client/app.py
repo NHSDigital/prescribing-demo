@@ -36,8 +36,6 @@ def exclude_from_auth(func):
     func._exclude_from_auth = False
     return func
 
-# todo: remove this supression
-#@app.before_request
 def auth_check():
     skip_auth = False
 
