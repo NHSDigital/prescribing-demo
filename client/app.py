@@ -38,7 +38,7 @@ def exclude_from_auth(func):
     func._exclude_from_auth = False
     return func
 
-@app.before_request
+#@app.before_request
 def auth_check():
     skip_auth = False
 
@@ -115,8 +115,12 @@ def get_send():
         headers=headers
     )
 
+    signatureBytes = response.json()['signature'].encode()
+    signatureBase64Bytes = base64.b64encode(signatureBytes)
+    signature = signatureBase64Bytes.decode()
+
     return render_client('send', sign_response={
-        'signature': base64.b64encode(response.json()['signature'])
+        'signature': signature
     })
 
 @app.route(SEND_URL, methods=["POST"])
