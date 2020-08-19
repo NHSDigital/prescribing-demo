@@ -273,7 +273,7 @@
         <div rv-show="mode | isSend">
             <div class="nhsuk-grid-row">
                 <div class="nhsuk-grid-column-two-thirds">
-                    <button class="nhsuk-button" type="submit" onclick="sendPrescriptionRequest()">Send prescription</button>
+                    <button class="nhsuk-button" type="submit" rv-hide="sendResponse" onclick="sendPrescriptionRequest()">Send prescription</button>
                     <button class="nhsuk-button nhsuk-button--secondary" type="submit" onclick="resetPageData('sign'); resetSignResponse();">Reset</button>
                 </div>
             </div>
