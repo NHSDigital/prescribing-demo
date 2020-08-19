@@ -1,7 +1,8 @@
 const pageData = {
     examples: [
-        new Example("example-1", "Single line item", EXAMPLE_PRESCRIPTION_SINGLE_LINE_ITEM),
-        new Example("example-2", "Multiple line items", EXAMPLE_PRESCRIPTION_MULTIPLE_LINE_ITEMS)
+        new Example("example-1", "Repeat Dispensing", REPEAT_DISPENSING),
+        // todo: cater for multiple example use-case (needs selected example tracked through redirects)
+        //new Example("example-2", "Acute Nominated Pharmacy", ACUTE_NOMINATED_PHARMACY)
     ],
     mode: "sign",
     signature: "",
@@ -64,6 +65,8 @@ rivets.formatters.isSign = (mode) => mode === 'sign'
 
 rivets.formatters.isVerify = (mode) => mode === 'verify'
 
+rivets.formatters.isSend = (mode) => mode === 'send'
+
 rivets.formatters.joinWithSpaces = function(strings) {
     return strings.join(" ")
 }
@@ -125,21 +128,47 @@ async function sendVerifyRequest() {
         })
 
         pageData.signResponse = {}
-        pageData.signResponse.statusCode = response.status
-        pageData.signResponse.statusCode = response.statusText
-        pageData.signResponse.body = JSON.stringify(await response.json())
+        pageData.signResponse.signature = JSON.stringify(await response.json())
     } catch(e) {
         console.log(e)
         addError('Communication error')
     }
 }
 
-function handleResponse() {
-    pageData.signResponse = {
-        statusCode: this.status,
-        statusText: this.statusText,
-        body: this.responseText
+async function sendPrescriptionRequest() {
+    try {
+        const bundle = getPayload()
+
+        updateBundleSignature(bundle)
+
+        const response = await fetch("/send", {
+            method: "POST",
+            body: JSON.stringify(bundle),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+
+        const sendResponse = await response.json()
+
+        pageData.sendResponse = {}
+        pageData.sendResponse.statusCode = sendResponse.status_code
+    } catch(e) {
+        console.log(e)
+        addError('Communication error')
     }
+}
+
+function updateBundleSignature(bundle) {
+    const provenanceIndex =
+        bundle.entry
+            .map(entry => entry.resource)
+            .flatMap(resource => resource.resourceType)
+            .indexOf("Provenance");
+
+    const provenance = bundle["entry"][provenanceIndex]
+
+    provenance.resource.signature.data = pageData.signResponse.signature
 }
 
 window.onerror = function(msg, url, line, col, error) {
@@ -161,17 +190,16 @@ function getSummary(payload) {
     const patient = getResourcesOfType(payload, "Patient")[0]
     const practitioner = getResourcesOfType(payload, "Practitioner")[0]
     const encounter = getResourcesOfType(payload, "Encounter")[0]
-    // todo: remove these?
     const organizations = getResourcesOfType(payload, "Organization")
-    //const prescribingOrganization = organizations.filter(organization => "urn:uuid:" + organization.id === encounter.serviceProvider.reference)[0]
-    //const parentOrganization = organizations.filter(organization => "urn:uuid:" + organization.id === prescribingOrganization.partOf.reference)[0]
+    const prescribingOrganization = organizations[0]
+    const parentOrganization = organizations[1]
     const medicationRequests = getResourcesOfType(payload, "MedicationRequest")
     return {
         patient: patient,
         practitioner: practitioner,
         encounter: encounter,
-        prescribingOrganization: organization1b,
-        parentOrganization: organization1a,
+        prescribingOrganization: prescribingOrganization,
+        parentOrganization: parentOrganization,
         medicationRequests: medicationRequests
     }
 }
@@ -193,6 +221,7 @@ function onLoad() {
 function resetPageData(pageMode = '') {
     pageData.mode = pageMode
     pageData.signRequestSummary = getSummary(getPayload())
+    pageData.sendResponse = null
     pageData.errorList = null
 }
 

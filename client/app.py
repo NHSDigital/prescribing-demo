@@ -13,6 +13,7 @@ from cryptography.fernet import Fernet
 OAUTH_SERVER_BASE_PATH = os.environ["OAUTH_SERVER_BASE_PATH"]
 ELECTRONIC_PRESCRIPTION_API_BASE_PATH = os.environ["ELECTRONIC_PRESCRIPTION_API_BASE_PATH"]
 ELECTRONIC_PRESCRIPTION_API_PREPARE_PATH = os.environ["ELECTRONIC_PRESCRIPTION_API_PREPARE_PATH"]
+ELECTRONIC_PRESCRIPTION_API_SEND_PATH = os.environ["ELECTRONIC_PRESCRIPTION_API_SEND_PATH"]
 REMOTE_SIGNING_SERVER_BASE_PATH = os.environ["REMOTE_SIGNING_SERVER_BASE_PATH"]
 REDIRECT_URI = os.environ["REDIRECT_URI"]
 CLIENT_ID = os.environ["CLIENT_ID"]
@@ -26,8 +27,8 @@ DEV_MODE = os.environ.get("DEV_MODE", False)
 
 SIGN_URL = "/sign"
 VERIFY_URL = "/verify"
-COMPLETE_FLOW = "/complete"
-REDIRECT_URL_FOR_STATE = {"sign": SIGN_URL, "complete": COMPLETE_FLOW}
+SEND_URL = "/send"
+REDIRECT_URL_FOR_STATE = {"sign": SIGN_URL, "send": SEND_URL}
 
 fernet = Fernet(SESSION_TOKEN_ENCRYPTION_KEY.encode('utf-8'))
 app = flask.Flask(__name__)
@@ -36,7 +37,7 @@ def exclude_from_auth(func):
     func._exclude_from_auth = False
     return func
 
-@app.before_request
+#@app.before_request
 def auth_check():
     skip_auth = False
 
@@ -73,15 +74,14 @@ def post_sign():
 
     message_digest = prepare_prescription_response_body['parameter'][0]['valueString']
     # todo: replace with human readable format mapped from eps prepare response where (parameter.name == message-display).valueString (prepare_prescription_response_body['parameter'][1]['valueString'])
-    #message_display = "####Patient\r\n\r\n**NHS Number**: 945 374 0586\r\n\r\n**Name**: PENSON, HEADLEY TED (Mr)\r\n\r\n**Date of Birth**: 1977-03-27\r\n\r\n**Address (Home)**:  \r\n10 CRECY CLOSE,  \r\nDERBY,  \r\nDE22 3JU\r\n\r\n####Author\r\n\r\n**Name**: CHANDLER, ANDREW\r\n\r\n**Telecom (Work)**: 01945700223\r\n\r\n####Organisation\r\n\r\n**Name**: PARSON DROVE SURGERY\r\n\r\n**Telecom (Work)**: 01945700223\r\n\r\n**Address (Work)**:  \r\n240 MAIN ROAD,  \r\nPARSON DROVE,  \r\nWISBECH,  \r\nCAMBRIDGESHIRE,  \r\nPE13 4JA\r\n\r\n####Medication Requested\r\n\r\n|Name|Dose|Quantity|Unit|\r\n|----|----|--------|----|\r\n|Microgynon 30 tablets (Bayer Plc)|As Directed|63|tablet\r\n\r\netc."
+    message_display = "####Patient\r\n\r\n**NHS Number**: 945 374 0586\r\n\r\n**Name**: PENSON, HEADLEY TED (Mr)\r\n\r\n**Date of Birth**: 1977-03-27\r\n\r\n**Address (Home)**:  \r\n10 CRECY CLOSE,  \r\nDERBY,  \r\nDE22 3JU\r\n\r\n####Author\r\n\r\n**Name**: CHANDLER, ANDREW\r\n\r\n**Telecom (Work)**: 01945700223\r\n\r\n####Organisation\r\n\r\n**Name**: PARSON DROVE SURGERY\r\n\r\n**Telecom (Work)**: 01945700223\r\n\r\n**Address (Work)**:  \r\n240 MAIN ROAD,  \r\nPARSON DROVE,  \r\nWISBECH,  \r\nCAMBRIDGESHIRE,  \r\nPE13 4JA\r\n\r\n####Medication Requested\r\n\r\n|Name|Dose|Quantity|Unit|\r\n|----|----|--------|----|\r\n|Microgynon 30 tablets (Bayer Plc)|As Directed|63|tablet\r\n\r\netc."
 
     headers = {
         'x-nhsd-signing-app-id': SIGNING_CLIENT_ID,
         'x-nhsd-signing-app-secret': SIGNING_CLIENT_SECRET
     }
 
-    #signRequestString = json.dumps({ 'payload': message_digest, 'display': message_display })
-    signRequestString = json.dumps({ 'payload': message_digest })
+    signRequestString = json.dumps({ 'payload': message_digest, 'display': message_display, 'algorithm': "SHA1" })
     signRequest = json.loads(signRequestString)
 
     sign_response = httpx.post(
@@ -96,12 +96,12 @@ def post_sign():
     return {
         'token': sign_response_body['token'],
         'redirectUri': sign_response_body['redirectUri'],
-        'callbackUri': f'{SERVER_NAME}/complete'
+        'callbackUri': f'{SERVER_NAME}/send'
     }
 
 
-@app.route(COMPLETE_FLOW, methods=["GET"])
-def get_complete():
+@app.route(SEND_URL, methods=["GET"])
+def get_send():
     token = flask.request.args.get('token', '')
 
     headers = {
@@ -114,11 +114,22 @@ def get_complete():
         headers=headers
     )
 
-    return render_client('sign', {
-        'status_code': response.status_code,
-        'status_text': '',
-        'body': response.json()['signature']
+    return render_client('send', sign_response={
+        'signature': response.json()['signature']
     })
+
+@app.route(SEND_URL, methods=["POST"])
+def post_send():
+    prescription = flask.request.json
+
+    send_prescription_response = httpx.post(
+        f"{ELECTRONIC_PRESCRIPTION_API_BASE_PATH}/{ELECTRONIC_PRESCRIPTION_API_SEND_PATH}",
+        json=prescription
+    )
+
+    return {
+        'status_code': send_prescription_response.status_code
+    }
 
 
 @app.route(VERIFY_URL, methods=["GET"])
@@ -169,11 +180,13 @@ def redirect_and_set_cookies(state, access_token_encrypted, cookie_expiry):
     return callback_response
 
 
-def render_client(page_mode, sign_response=None):
+def render_client(page_mode, sign_response=None, send_response=None):
+    print(send_response)
     return flask.render_template(
         "client.html",
         page_mode=page_mode,
-        sign_response=sign_response
+        sign_response=sign_response,
+        send_response=send_response
     )
 
 def get_authorize_url(state):

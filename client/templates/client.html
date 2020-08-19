@@ -11,15 +11,12 @@
     {% if page_mode is not none %}
     <script type="application/javascript">
         pageData.mode="{{page_mode}}";
-        pageData.signature="{{signature}}";
     </script>
     {% endif %}
     {% if sign_response is not none %}
     <script type="text/javascript">
         pageData.signResponse = {}
-        pageData.signResponse.statusCode = "{{sign_response.status_code}}"
-        pageData.signResponse.statusText = "{{sign_response.status_text}}"
-        pageData.signResponse.body = "{{sign_response.body}}"
+        pageData.signResponse.signature = "{{sign_response.signature}}"
     </script>
     {% endif %}
 </head>
@@ -65,16 +62,19 @@
                     </ul>
                 </nav>
             </div>
-        </div>
+        </div>  
         <div class="nhsuk-grid-row">
             <div class="nhsuk-grid-column-two-thirds">
                 <fieldset class="nhsuk-fieldset">
                     <legend class="nhsuk-fieldset__legend nhsuk-fieldset__legend--xl">
                         <div rv-show="mode | isSign">
-                            <h1 class="nhsuk-fieldset__heading">Review and sign</h1>
+                            <h1 class="nhsuk-fieldset__heading">Sign prescription</h1>
                         </div>
                         <div rv-show="mode | isVerify">
                             <h1 class="nhsuk-fieldset__heading">Verify signature</h1>
+                        </div>
+                        <div rv-show="mode | isSend">
+                            <h1 class="nhsuk-fieldset__heading">Send prescription</h1>
                         </div>
                     </legend>
                 </fieldset>
@@ -84,13 +84,6 @@
             <div class="nhsuk-grid-row">
                 <div class="nhsuk-grid-column-two-thirds">
                     <div class="nhsuk-action-link">
-                        <a class="nhsuk-action-link__link" rv-hide="loggedIn" rv-href="'/login?state=' | appendPageMode">
-                            <svg class="nhsuk-icon nhsuk-icon__arrow-right-circle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M0 0h24v24H0z" fill="none"></path>
-                                <path d="M12 2a10 10 0 0 0-9.95 9h11.64L9.74 7.05a1 1 0 0 1 1.41-1.41l5.66 5.65a1 1 0 0 1 0 1.42l-5.66 5.65a1 1 0 0 1-1.41 0 1 1 0 0 1 0-1.41L13.69 13H2.05A10 10 0 1 0 12 2z"></path>
-                            </svg>
-                            <span class="nhsuk-action-link__text">Sign in</span>
-                        </a>
                         <a class="nhsuk-action-link__link" rv-show="loggedIn" rv-href="'/logout?state=' | appendPageMode">
                             <svg class="nhsuk-icon nhsuk-icon__arrow-right-circle" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
                                 <path d="M0 0h24v24H0z" fill="none"></path>
@@ -113,7 +106,7 @@
                 </div>
             </div>
         </div>
-        <div class="nhsuk-grid-row">
+        <div class="nhsuk-grid-row" rv-hide="mode | isSend">
             <div class="nhsuk-grid-column-two-thirds">
                 <div class="nhsuk-form-group">
                     <fieldset class="nhsuk-fieldset" aria-describedby="example-hint">
@@ -224,19 +217,29 @@
                 </div>
             </div>
         </div>
-        <div rv-show="mode | isSign">
-            <div class="nhsuk-grid-row">
-                <div class="nhsuk-grid-column-two-thirds">
-                    <button class="nhsuk-button" type="submit" onclick="sendSignRequest()">Sign prescription</button>
-                    <button class="nhsuk-button nhsuk-button--secondary" type="submit" onclick="resetPageData('sign'); resetSignResponse();">Reset</button>
+        <div class="nhsuk-grid-row" rv-show="signResponse">
+            <div class="nhsuk-grid-column-two-thirds">
+                <div class="nhsuk-panel-with-label">
+                    <h3 class="nhsuk-panel-with-label__label">Signature</h3>
+                    <dl class="nhsuk-summary-list">
+                        <div class="nhsuk-summary-list__row">
+                            <dt class="nhsuk-summary-list__key">Value</dt>
+                            <dd class="nhsuk-summary-list__value">{signResponse.signature}</dd>
+                        </div>
+                    </dl>
                 </div>
             </div>
         </div>
-        <div rv-show="mode | isVerify">
-            <div class="nhsuk-grid-row">
-                <div class="nhsuk-grid-column-two-thirds">
-                    <button class="nhsuk-button" type="submit" onclick="sendVerifyRequest()">Verify signature</button>
-                    <button class="nhsuk-button nhsuk-button--secondary" type="submit" onclick="resetPageData('verify'); resetSignResponse();">Reset</button>
+        <div class="nhsuk-grid-row" rv-show="sendResponse">
+            <div class="nhsuk-grid-column-two-thirds">
+                <div class="nhsuk-panel-with-label">
+                    <h3 class="nhsuk-panel-with-label__label">API Response</h3>
+                    <dl class="nhsuk-summary-list">
+                        <div class="nhsuk-summary-list__row">
+                            <dt class="nhsuk-summary-list__key">Status code</dt>
+                            <dd class="nhsuk-summary-list__value">{sendResponse.statusCode}</dd>
+                        </div>
+                    </dl>
                 </div>
             </div>
         </div>
@@ -252,24 +255,26 @@
                 </div>
             </div>
         </div>
-        <div class="nhsuk-grid-row" rv-show="signResponse">
-            <div class="nhsuk-grid-column-two-thirds">
-                <div class="nhsuk-panel-with-label">
-                    <h3 class="nhsuk-panel-with-label__label">API Response</h3>
-                    <dl class="nhsuk-summary-list">
-                        <div class="nhsuk-summary-list__row">
-                            <dt class="nhsuk-summary-list__key">Status code</dt>
-                            <dd class="nhsuk-summary-list__value">{signResponse.statusCode}</dd>
-                        </div>
-                        <div class="nhsuk-summary-list__row">
-                            <dt class="nhsuk-summary-list__key">Status text</dt>
-                            <dd class="nhsuk-summary-list__value">{signResponse.statusText}</dd>
-                        </div>
-                        <div class="nhsuk-summary-list__row">
-                            <dt class="nhsuk-summary-list__key">Body</dt>
-                            <dd class="nhsuk-summary-list__value">{signResponse.body}</dd>
-                        </div>
-                    </dl>
+        <div rv-show="mode | isSign">
+            <div class="nhsuk-grid-row">
+                <div class="nhsuk-grid-column-two-thirds">
+                    <button class="nhsuk-button" type="submit" onclick="sendSignRequest()">Sign prescription</button>
+                </div>
+            </div>
+        </div>
+        <div rv-show="mode | isVerify">
+            <div class="nhsuk-grid-row">
+                <div class="nhsuk-grid-column-two-thirds">
+                    <button class="nhsuk-button" type="submit" onclick="sendVerifyRequest()">Verify signature</button>
+                    <button class="nhsuk-button nhsuk-button--secondary" type="submit" onclick="resetPageData('verify'); resetSignResponse();">Reset</button>
+                </div>
+            </div>
+        </div>
+        <div rv-show="mode | isSend">
+            <div class="nhsuk-grid-row">
+                <div class="nhsuk-grid-column-two-thirds">
+                    <button class="nhsuk-button" type="submit" onclick="sendPrescriptionRequest()">Send prescription</button>
+                    <button class="nhsuk-button nhsuk-button--secondary" type="submit" onclick="resetPageData('sign'); resetSignResponse();">Reset</button>
                 </div>
             </div>
         </div>
