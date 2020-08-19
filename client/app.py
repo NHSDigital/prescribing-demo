@@ -81,7 +81,7 @@ def post_sign():
         'x-nhsd-signing-app-secret': SIGNING_CLIENT_SECRET
     }
 
-    signRequestString = json.dumps({ 'payload': message_digest, 'display': message_display, 'algorithm': "SHA1" })
+    signRequestString = json.dumps({ 'payload': message_digest, 'display': message_display, 'algorithm': "SHA-256" })
     signRequest = json.loads(signRequestString)
 
     sign_response = httpx.post(

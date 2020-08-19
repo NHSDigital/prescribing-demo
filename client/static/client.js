@@ -168,7 +168,7 @@ function updateBundleSignature(bundle) {
 
     const provenance = bundle["entry"][provenanceIndex]
 
-    provenance.resource.signature[0].data = pageData.signResponse.signature
+    provenance.resource.signature[0].data = btoa(pageData.signResponse.signature)
 }
 
 window.onerror = function(msg, url, line, col, error) {
