@@ -4,6 +4,7 @@ import os
 from urllib.parse import urlencode
 
 import json
+import base64
 
 import flask
 import httpx
@@ -115,7 +116,7 @@ def get_send():
     )
 
     return render_client('send', sign_response={
-        'signature': response.json()['signature']
+        'signature': base64.b64encode(response.json()['signature'])
     })
 
 @app.route(SEND_URL, methods=["POST"])
