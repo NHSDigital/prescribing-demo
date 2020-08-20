@@ -68,15 +68,20 @@ def get_sign():
 def post_sign():
     prescription = flask.request.json
 
+    prepare_headers = {
+        'NHSD-Session-URID': '1234'
+    }
+
     prepare_response = httpx.post(
         f"{ELECTRONIC_PRESCRIPTION_API_BASE_PATH}/{ELECTRONIC_PRESCRIPTION_API_PREPARE_PATH}",
+        headers=prepare_headers,
         json=prescription
     )
 
     prepare_response_body = prepare_response.json()
     parameter_map = {p['name']: p['valueString'] for p in prepare_response_body['parameter']}
 
-    headers = {
+    sign_headers = {
         'x-nhsd-signing-app-id': SIGNING_CLIENT_ID,
         'x-nhsd-signing-app-secret': SIGNING_CLIENT_SECRET
     }
@@ -87,7 +92,7 @@ def post_sign():
 
     sign_response = httpx.post(
         f"{REMOTE_SIGNING_SERVER_BASE_PATH}/csc/v1/signatures/SignHash",
-        headers=headers,
+        headers=sign_headers,
         json={
             'algorithm': parameter_map['algorithm'],
             'payload': parameter_map['payload'],
