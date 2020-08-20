@@ -118,7 +118,7 @@ def get_send():
     }
 
     payload_response = httpx.get(
-        f"{REMOTE_SIGNING_SERVER_BASE_PATH}/csc/v1/signatures/SignHash?token={token}",
+        f"{REMOTE_SIGNING_SERVER_BASE_PATH}/csc/v1/signatures/SignHash/{token}",
         headers=headers
     )
 
@@ -126,7 +126,7 @@ def get_send():
     payload_decoded = base64.b64decode(payload.encode()).decode()
 
     signature_response = httpx.get(
-        f"{REMOTE_SIGNING_SERVER_BASE_PATH}/csc/v1/Signature?token={token}",
+        f"{REMOTE_SIGNING_SERVER_BASE_PATH}/csc/v1/Signature/{token}",
         headers=headers
     )
 
