@@ -67,17 +67,7 @@ def get_sign():
 @app.route(SIGN_URL, methods=["POST"])
 def post_sign():
     prescription = flask.request.json
-
-    prepare_headers = {
-        'NHSD-Session-URID': '1234'
-    }
-
-    prepare_response = httpx.post(
-        f"{ELECTRONIC_PRESCRIPTION_API_BASE_PATH}/{ELECTRONIC_PRESCRIPTION_API_PREPARE_PATH}",
-        headers=prepare_headers,
-        json=prescription
-    )
-
+    prepare_response = make_eps_api_request(prescription, ELECTRONIC_PRESCRIPTION_API_PREPARE_PATH)
     prepare_response_body = prepare_response.json()
     parameter_map = {p['name']: p['valueString'] for p in prepare_response_body['parameter']}
 
@@ -149,15 +139,27 @@ def get_send():
 @app.route(SEND_URL, methods=["POST"])
 def post_send():
     prescription = flask.request.json
-
-    send_prescription_response = httpx.post(
-        f"{ELECTRONIC_PRESCRIPTION_API_BASE_PATH}/{ELECTRONIC_PRESCRIPTION_API_SEND_PATH}",
-        json=prescription
-    )
-
+    send_prescription_response = make_eps_api_request(prescription, ELECTRONIC_PRESCRIPTION_API_SEND_PATH)
     return {
         'status_code': send_prescription_response.status_code
     }
+
+
+def make_eps_api_request(prescription, path):
+    send_headers = {
+        'NHSD-Session-URID': '1234'
+    }
+
+    access_token_encrypted = flask.request.cookies.get("Access-Token")
+    if access_token_encrypted is not None:
+        access_token = fernet.decrypt(access_token_encrypted.encode('utf-8')).decode('utf-8')
+        send_headers['Authorization'] = f"Bearer {access_token}"
+
+    return httpx.post(
+        f"{ELECTRONIC_PRESCRIPTION_API_BASE_PATH}/{path}",
+        headers=send_headers,
+        json=prescription
+    )
 
 
 @app.route(VERIFY_URL, methods=["GET"])
