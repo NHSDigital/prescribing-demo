@@ -71,18 +71,14 @@ def post_sign():
     prepare_response_body = prepare_response.json()
     parameter_map = {p['name']: p['valueString'] for p in prepare_response_body['parameter']}
 
-    sign_headers = {
+    headers = {
         'x-nhsd-signing-app-id': SIGNING_CLIENT_ID,
         'x-nhsd-signing-app-secret': SIGNING_CLIENT_SECRET
     }
 
-    print(prepare_response_body)
-
-    print(parameter_map)
-
     sign_response = httpx.post(
         f"{REMOTE_SIGNING_SERVER_BASE_PATH}/csc/v1/signatures/SignHash",
-        headers=sign_headers,
+        headers=headers,
         json={
             'algorithm': parameter_map['algorithm'],
             'payload': parameter_map['payload'],
@@ -146,18 +142,18 @@ def post_send():
 
 
 def make_eps_api_request(prescription, path):
-    send_headers = {
+    headers = {
         'NHSD-Session-URID': '1234'
     }
 
     access_token_encrypted = flask.request.cookies.get("Access-Token")
     if access_token_encrypted is not None:
         access_token = fernet.decrypt(access_token_encrypted.encode('utf-8')).decode('utf-8')
-        send_headers['Authorization'] = f"Bearer {access_token}"
+        headers['Authorization'] = f"Bearer {access_token}"
 
     return httpx.post(
         f"{ELECTRONIC_PRESCRIPTION_API_BASE_PATH}/{path}",
-        headers=send_headers,
+        headers=headers,
         json=prescription
     )
 
