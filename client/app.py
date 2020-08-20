@@ -10,7 +10,6 @@ import flask
 import httpx
 from cryptography.fernet import Fernet
 
-
 OAUTH_SERVER_BASE_PATH = os.environ["OAUTH_SERVER_BASE_PATH"]
 ELECTRONIC_PRESCRIPTION_API_BASE_PATH = os.environ["ELECTRONIC_PRESCRIPTION_API_BASE_PATH"]
 ELECTRONIC_PRESCRIPTION_API_PREPARE_PATH = os.environ["ELECTRONIC_PRESCRIPTION_API_PREPARE_PATH"]
@@ -34,9 +33,11 @@ REDIRECT_URL_FOR_STATE = {"sign": SIGN_URL, "send": SEND_URL}
 fernet = Fernet(SESSION_TOKEN_ENCRYPTION_KEY.encode('utf-8'))
 app = flask.Flask(__name__)
 
+
 def exclude_from_auth(func):
     func._exclude_from_auth = False
     return func
+
 
 @app.before_request
 def auth_check():
@@ -56,6 +57,7 @@ def auth_check():
         else:
             return login()
 
+
 @app.route("/", methods=["GET"])
 @app.route(SIGN_URL, methods=["GET"])
 def get_sign():
@@ -66,37 +68,28 @@ def get_sign():
 def post_sign():
     prescription = flask.request.json
 
-    prepare_prescription_response = httpx.post(
+    prepare_response = httpx.post(
         f"{ELECTRONIC_PRESCRIPTION_API_BASE_PATH}/{ELECTRONIC_PRESCRIPTION_API_PREPARE_PATH}",
         json=prescription
     )
 
-    prepare_prescription_response_body = prepare_prescription_response.json()
-    message_digest = prepare_prescription_response_body['parameter'][0]['valueString']
-    # todo: stop base64 encoding once the EPS FHIR API does this
-    message_digest_encoded = base64.b64encode(message_digest.encode()).decode()
-    # todo: replace with human readable format mapped from eps prepare response where (parameter.name == message-display).valueString (prepare_prescription_response_body['parameter'][1]['valueString'])
-    message_display = "####Patient\r\n\r\n**NHS Number**: 945 374 0586\r\n\r\n**Name**: PENSON, HEADLEY TED (Mr)\r\n\r\n**Date of Birth**: 1977-03-27\r\n\r\n**Address (Home)**:  \r\n10 CRECY CLOSE,  \r\nDERBY,  \r\nDE22 3JU\r\n\r\n####Author\r\n\r\n**Name**: CHANDLER, ANDREW\r\n\r\n**Telecom (Work)**: 01945700223\r\n\r\n####Organisation\r\n\r\n**Name**: PARSON DROVE SURGERY\r\n\r\n**Telecom (Work)**: 01945700223\r\n\r\n**Address (Work)**:  \r\n240 MAIN ROAD,  \r\nPARSON DROVE,  \r\nWISBECH,  \r\nCAMBRIDGESHIRE,  \r\nPE13 4JA\r\n\r\n####Medication Requested\r\n\r\n|Name|Dose|Quantity|Unit|\r\n|----|----|--------|----|\r\n|Microgynon 30 tablets (Bayer Plc)|As Directed|63|tablet\r\n\r\netc."
-    # todo: stop base64 encoding once the EPS FHIR API does this
-    message_display_encoded = base64.b64encode(message_display.encode()).decode()
+    prepare_response_body = prepare_response.json()
+    parameter_map = {p['name']: p['valueString'] for p in prepare_response_body['parameter']}
 
     headers = {
         'x-nhsd-signing-app-id': SIGNING_CLIENT_ID,
         'x-nhsd-signing-app-secret': SIGNING_CLIENT_SECRET
     }
 
-    signRequestString = json.dumps({
-        'payload': message_digest_encoded,
-        'display': message_display_encoded,
-        'algorithm': "RS1"
-    })
-    signRequest = json.loads(signRequestString)
-
     sign_response = httpx.post(
         f"{REMOTE_SIGNING_SERVER_BASE_PATH}/csc/v1/signatures/SignHash",
-        headers = headers,
-        json = signRequest,
-        verify = False
+        headers=headers,
+        json={
+            'algorithm': parameter_map['algorithm'],
+            'payload': parameter_map['payload'],
+            'display': parameter_map['display']
+        },
+        verify=False
     )
 
     sign_response_body = sign_response.json()
@@ -142,6 +135,7 @@ def get_send():
     return render_client('send', sign_response={
         'signature': xml_dsig_encoded
     })
+
 
 @app.route(SEND_URL, methods=["POST"])
 def post_send():
@@ -200,7 +194,8 @@ def redirect_and_set_cookies(state, access_token_encrypted, cookie_expiry):
     redirect_url = REDIRECT_URL_FOR_STATE.get(state, "sign")
     callback_response = flask.redirect(redirect_url)
     secure_flag = not DEV_MODE
-    callback_response.set_cookie("Access-Token", access_token_encrypted, expires=cookie_expiry, secure=secure_flag, httponly=True)
+    callback_response.set_cookie("Access-Token", access_token_encrypted, expires=cookie_expiry, secure=secure_flag,
+                                 httponly=True)
     callback_response.set_cookie("Access-Token-Set", "true", expires=cookie_expiry, secure=secure_flag)
     return callback_response
 
@@ -213,6 +208,7 @@ def render_client(page_mode, sign_response=None, send_response=None):
         sign_response=sign_response,
         send_response=send_response
     )
+
 
 def get_authorize_url(state):
     query_params = {
