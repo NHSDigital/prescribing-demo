@@ -81,6 +81,10 @@ def post_sign():
         'x-nhsd-signing-app-secret': SIGNING_CLIENT_SECRET
     }
 
+    print(prepare_response_body)
+
+    print(parameter_map)
+
     sign_response = httpx.post(
         f"{REMOTE_SIGNING_SERVER_BASE_PATH}/csc/v1/signatures/SignHash",
         headers=headers,
