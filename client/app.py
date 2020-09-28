@@ -118,6 +118,8 @@ def get_send():
         headers=headers
     )
 
+    print(signature_response)
+
     signature = signature_response.json()['signature']
     certificate = signature_response.json()['certificate']
 
